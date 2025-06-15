@@ -106,10 +106,10 @@ const FeaturesSection = () => {
               <div className="text-sm opacity-80 mb-2">API Response Example</div>
               <div className="bg-black/20 rounded p-3 text-sm font-mono">
                 <div className="text-green-300">{`{`}</div>
-                <div className="ml-4 text-blue-200">"status": "verified",</div>
-                <div className="ml-4 text-blue-200">"confidence": 0.98,</div>
-                <div className="ml-4 text-blue-200">"zoning": "residential",</div>
-                <div className="ml-4 text-blue-200">"cadastral_id": "LAG-03-B"</div>
+                <div className="ml-4 text-blue-200">&quot;status&quot;: &quot;verified&quot;,</div>
+                <div className="ml-4 text-blue-200">&quot;confidence&quot;: 0.98,</div>
+                <div className="ml-4 text-blue-200">&quot;zoning&quot;: &quot;residential&quot;,</div>
+                <div className="ml-4 text-blue-200">&quot;cadastral_id&quot;: &quot;LAG-03-B&quot;</div>
                 <div className="text-green-300">{`}`}</div>
               </div>
             </div>

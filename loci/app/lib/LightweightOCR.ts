@@ -16,7 +16,7 @@ export async function extractTextFromDocument(
 ): Promise<string> {
   try {
     // Basic image pre-processing with Sharp
-    let processed = await sharp(buffer)
+    const processed = await sharp(buffer)
       .grayscale()
       .normalize()
       .resize({ width: 1800, withoutEnlargement: true })

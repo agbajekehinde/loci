@@ -33,12 +33,15 @@ export async function extractTextFromDocument(
     // Configure Tesseract based on document type
     const tesseractOptions = getTesseractOptions(options.documentType);
     
-      // Perform OCR
+    // Perform OCR using CDN paths for WASM files
     const { data: { text } } = await Tesseract.recognize(
       processedBuffer,
       options.language || 'eng',
       {
-        corePath: '/tesseract/tesseract-core-simd.wasm', // <--- Added this line
+        // Use CDN paths to avoid WASM file location issues
+        workerPath: 'https://unpkg.com/tesseract.js@5.0.4/dist/worker.min.js',
+        langPath: 'https://tessdata.projectnaptha.com/4.0.0',
+        corePath: 'https://unpkg.com/tesseract.js-core@5.0.0/tesseract-core-simd.wasm',
         logger: (m) => {
           if (m.status === 'recognizing text') {
             console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);

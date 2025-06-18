@@ -23,6 +23,7 @@ export async function extractTextFromDocument(
   mimeType: string,
   options: OCROptions = {}
 ): Promise<string> {
+  
   try {
     console.log(`Starting OCR extraction for ${options.documentType || 'generic'} document`);
     
@@ -32,11 +33,12 @@ export async function extractTextFromDocument(
     // Configure Tesseract based on document type
     const tesseractOptions = getTesseractOptions(options.documentType);
     
-    // Perform OCR
+      // Perform OCR
     const { data: { text } } = await Tesseract.recognize(
       processedBuffer,
       options.language || 'eng',
       {
+        corePath: '/tesseract/tesseract-core-simd.wasm', // <--- Added this line
         logger: (m) => {
           if (m.status === 'recognizing text') {
             console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);

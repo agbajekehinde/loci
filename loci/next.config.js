@@ -1,9 +1,10 @@
 // next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Move serverComponentsExternalPackages to top level as serverExternalPackages
+  serverExternalPackages: ['tesseract.js', 'canvas'],
   experimental: {
-    // Enable server components
-    serverComponentsExternalPackages: ['tesseract.js', 'canvas'],
+    // Other experimental features can go here
   },
   // Configure webpack for better WASM handling
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {

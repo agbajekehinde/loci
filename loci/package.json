@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@thednp/dommatrix": "^2.0.12",
     "canvas": "^3.1.0",
     "dommatrix": "^1.0.3",
     "exif-parser": "^0.1.12",
@@ -20,6 +21,7 @@
     "openai": "^5.3.0",
     "opencv4nodejs": "^5.6.0",
     "pdf-parse": "^1.1.1",
+    "pdf2pic": "^3.2.0",
     "pdfjs-dist": "^5.3.31",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -30,6 +32,7 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

@@ -1,22 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { MapPin, Upload, Check, AlertCircle, Loader2, RefreshCw, CheckCircle, XCircle, Clock, AlertTriangle, Shield, Globe, FileCheck, MapPinIcon } from 'lucide-react';
+import { Upload, Loader2, CheckCircle, XCircle, AlertTriangle, Shield } from 'lucide-react';
+import Image from 'next/image';
 
 // Interfaces for data structures
-interface Location {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-}
-
 interface FormDataType {
     full_name: string;
     phone_number: string;
     email: string;
     nin_or_bvn: string;
     typed_address: string;
-    gps_latitude: number | null;
-    gps_longitude: number | null;
     utility_bill: File | null;
     id_document: File | null;
     land_document: File | null;
@@ -24,10 +17,18 @@ interface FormDataType {
     data_consent: boolean;
 }
 
-interface CheckResult {
+interface DocumentValidity {
     passed: boolean;
     score: number;
     details: string;
+    confidence: number;
+}
+
+interface DocumentMatch {
+    address_match: boolean;
+    name_match: boolean;
+    match_score: number;
+    found_addresses: string[];
     confidence: number;
 }
 
@@ -36,22 +37,40 @@ interface VerificationResult {
     overall_score: number;
     verification_id: string;
     checks: {
-        gps_reverse_check: CheckResult;
-        document_validity: CheckResult;
-        address_match: CheckResult;
-        distance_integrity: CheckResult;
-        zoning_cadastral: CheckResult;
+        utility_bill: {
+            validity: DocumentValidity;
+            match: DocumentMatch;
+        };
+        id_document: {
+            validity: DocumentValidity;
+            match: DocumentMatch;
+        };
+        zoning_cadastral: {
+            passed: boolean;
+            score: number;
+            details: string;
+            confidence: number;
+        };
+        gps_reverse_check?: {
+            ip?: string;
+            city?: string;
+            region?: string;
+            country?: string;
+            isp?: string;
+            details?: string;
+        };
+        distance_integrity?: {
+            passed?: boolean;
+            details?: string;
+        };
     };
+    ip?: string;
     recommendations?: string[];
     timestamp: string;
 }
 
 const AddressVerificationForm: React.FC = () => {
     // State management for form data, UI elements, and results
-    const [locationStatus, setLocationStatus] = useState<'requesting' | 'granted' | 'denied' | 'unavailable'>('requesting');
-    const [userLocation, setUserLocation] = useState<Location | null>(null);
-    const [pinLocation, setPinLocation] = useState<Location | null>(null);
-    const [pinDropped, setPinDropped] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
     const [showResults, setShowResults] = useState<boolean>(false);
@@ -61,87 +80,12 @@ const AddressVerificationForm: React.FC = () => {
         email: '',
         nin_or_bvn: '',
         typed_address: '',
-        gps_latitude: null,
-        gps_longitude: null,
         utility_bill: null,
         id_document: null,
         land_document: null,
         info_consent: false,
         data_consent: false
     });
-
-    // Helper function to request notification permission
-    const requestNotificationPermission = async () => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    new Notification('LandVerify', {
-                        body: 'Please allow location access to verify your address',
-                        icon: '/favicon.ico'
-                    });
-                }
-            } catch (error) {
-                console.error('Notification permission error:', error);
-            }
-        }
-    };
-
-    // Effect hook to request user's location on component mount
-    useEffect(() => {
-        const requestLocation = async () => {
-            if (!navigator.geolocation) {
-                setLocationStatus('unavailable');
-                return;
-            }
-
-            await requestNotificationPermission();
-
-            const options = {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
-            };
-
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const location: Location = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy
-                    };
-                    setUserLocation(location);
-                    setLocationStatus('granted');
-                    setPinLocation(location); // Set initial pin location to user's GPS
-                    setFormData(prev => ({
-                        ...prev,
-                        gps_latitude: location.latitude,
-                        gps_longitude: location.longitude
-                    }));
-
-                    if (Notification.permission === 'granted') {
-                        new Notification('Location Access Granted', {
-                            body: 'Your location has been captured for address verification',
-                            icon: '/favicon.ico'
-                        });
-                    }
-                },
-                (error) => {
-                    console.error('Location error:', error);
-                    setLocationStatus('denied');
-                    if (Notification.permission === 'granted') {
-                        new Notification('Location Access Denied', {
-                            body: 'Manual pin drop will be required for verification',
-                            icon: '/favicon.ico'
-                        });
-                    }
-                },
-                options
-            );
-        };
-
-        requestLocation();
-    }, []);
 
     // Handler for general input changes
     const handleInputChange = <K extends keyof FormDataType>(field: K, value: FormDataType[K]): void => {
@@ -176,45 +120,6 @@ const AddressVerificationForm: React.FC = () => {
         }));
     };
 
-    // Simulates dropping a pin on a map
-    const simulateMapPin = () => {
-        const baseLocation = userLocation || { latitude: 6.5244, longitude: 3.3792 }; // Default to Lagos if user location not available
-        const offset = 0.01;
-
-        const newPin: Location = {
-            latitude: baseLocation.latitude + (Math.random() - 0.5) * offset,
-            longitude: baseLocation.longitude + (Math.random() - 0.5) * offset
-        };
-
-        setPinLocation(newPin);
-        setPinDropped(true);
-        setFormData(prev => ({
-            ...prev,
-            gps_latitude: newPin.latitude,
-            gps_longitude: newPin.longitude
-        }));
-
-        if (Notification.permission === 'granted') {
-            new Notification('Location Pin Updated', {
-                body: `New coordinates: ${newPin.latitude.toFixed(6)}, ${newPin.longitude.toFixed(6)}`,
-                icon: '/favicon.ico'
-            });
-        }
-    };
-
-    // Resets the pin location to the user's current GPS location
-    const resetToUserLocation = () => {
-        if (userLocation) {
-            setPinLocation(userLocation);
-            setPinDropped(false);
-            setFormData(prev => ({
-                ...prev,
-                gps_latitude: userLocation.latitude,
-                gps_longitude: userLocation.longitude
-            }));
-        }
-    };
-
     // Converts a File object to a Base64 string
     const fileToBase64 = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
@@ -234,7 +139,7 @@ const AddressVerificationForm: React.FC = () => {
 
         // Basic validation for required fields
         if (!formData.full_name || !formData.phone_number || !formData.email || !formData.typed_address ||
-            !formData.gps_latitude || !formData.gps_longitude || !formData.utility_bill ||
+            !formData.utility_bill ||
             !formData.id_document || !formData.info_consent || !formData.data_consent) {
             // Using a custom message box instead of alert()
             const messageBox = document.createElement('div');
@@ -267,8 +172,6 @@ const AddressVerificationForm: React.FC = () => {
                 phone_number: formData.phone_number,
                 nin_or_bvn: formData.nin_or_bvn,
                 typed_address: formData.typed_address,
-                gps_latitude: formData.gps_latitude!,
-                gps_longitude: formData.gps_longitude!,
                 utility_bill: utilityBillBase64,
                 id_document: idDocumentBase64,
                 land_document: landDocumentBase64
@@ -333,48 +236,6 @@ const AddressVerificationForm: React.FC = () => {
         return 'text-red-600';
     };
 
-    const getScoreBgColor = (score: number) => {
-        if (score >= 80) return 'bg-green-100';
-        if (score >= 60) return 'bg-yellow-100';
-        return 'bg-red-100';
-    };
-
-    // Component to display location status
-    const LocationStatus = () => {
-        switch (locationStatus) {
-            case 'requesting':
-                return (
-                    <div className="flex items-center gap-2 text-blue-600 bg-blue-50 p-3 rounded-lg mb-4">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Requesting location access...</span>
-                    </div>
-                );
-            case 'granted':
-                return (
-                    <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg mb-4">
-                        <Check className="w-4 h-4" />
-                        <span className="text-sm">Location access granted</span>
-                    </div>
-                );
-            case 'denied':
-                return (
-                    <div className="flex items-center gap-2 text-amber-600 bg-amber-50 p-3 rounded-lg mb-4">
-                        <AlertCircle className="w-4 h-4" />
-                        <span className="text-sm">Location access denied - manual pin drop required</span>
-                    </div>
-                );
-            case 'unavailable':
-                return (
-                    <div className="flex items-center gap-2 text-red-600 bg-red-50 p-3 rounded-lg mb-4">
-                        <AlertCircle className="w-4 h-4" />
-                        <span className="text-sm">Location services unavailable</span>
-                    </div>
-                );
-            default:
-                return null;
-        }
-    };
-
     // Overlay component for submission loading state
     const LoadingOverlay = () => (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -390,19 +251,11 @@ const AddressVerificationForm: React.FC = () => {
                     <div className="space-y-2 text-sm text-left">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span>GPS reverse geocoding...</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                             <span>Document authenticity check...</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
                             <span>Address matching analysis...</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span>Distance integrity verification...</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
@@ -415,194 +268,180 @@ const AddressVerificationForm: React.FC = () => {
     );
 
     // Component to display verification results
-    const ResultsDisplay = ({ result }: { result: VerificationResult }) => (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div className={`p-6 ${result.success ? 'bg-green-50' : 'bg-red-50'} border-b`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            {result.success ? (
-                                <CheckCircle className="w-8 h-8 text-green-600" />
-                            ) : (
-                                <XCircle className="w-8 h-8 text-red-600" />
-                            )}
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900">
-                                    {result.success ? 'Verification Successful' : 'Verification Failed'}
-                                </h2>
-                                <p className="text-gray-600">ID: {result.verification_id}</p>
-                            </div>
-                        </div>
-                        <div className="text-right">
-                            <div className={`text-3xl font-bold ${getScoreColor(result.overall_score)}`}>
-                                {result.overall_score}%
-                            </div>
-                            <p className="text-sm text-gray-600">Overall Score</p>
-                        </div>
+    const ResultsDisplay: React.FC<{ result: VerificationResult }> = ({ result }) => {
+        // Get uploaded images from formData (closure)
+        const [utilityBillUrl, setUtilityBillUrl] = useState<string | null>(null);
+        const [idDocumentUrl, setIdDocumentUrl] = useState<string | null>(null);
+        useEffect(() => {
+            if (formData.utility_bill) {
+                setUtilityBillUrl(URL.createObjectURL(formData.utility_bill));
+            }
+            if (formData.id_document) {
+                setIdDocumentUrl(URL.createObjectURL(formData.id_document));
+            }
+            return () => {
+                if (utilityBillUrl) URL.revokeObjectURL(utilityBillUrl);
+                if (idDocumentUrl) URL.revokeObjectURL(idDocumentUrl);
+            };
+            // eslint-disable-next-line
+        }, [showResults]);
+
+        // Helper to render validity and match for a document
+        const renderDocSection = (label: string, doc: { validity: DocumentValidity; match: DocumentMatch }, imageUrl?: string) => (
+            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                <h4 className="text-lg font-semibold mb-2 text-gray-900">{label}</h4>
+                <div className="flex flex-col md:flex-row gap-6">
+                    <div className="flex-1">
+                        <div className="font-medium mb-1 text-gray-900">Validity</div>
+                        <div className="mb-1">Status: <span className={doc.validity.passed ? 'text-green-700' : 'text-red-700'}>{doc.validity.passed ? 'Passed' : 'Failed'}</span></div>
+                        <div className="mb-1">Score: <span className="font-bold text-gray-900">{doc.validity.score}%</span></div>
+                        <div className="mb-1">Confidence: <span className="font-bold text-gray-900">{doc.validity.confidence}%</span></div>
+                        <div className="mb-1">Details: <span className="text-gray-800">{doc.validity.details}</span></div>
                     </div>
-                </div>
-
-                {/* Score Breakdown */}
-                <div className="p-6 border-b">
-                    <h3 className="text-lg font-semibold mb-4">Verification Breakdown</h3>
-                    <div className="grid gap-4">
-                        {Object.entries(result.checks).map(([key, check]) => {
-                            const icons = {
-                                gps_reverse_check: Globe,
-                                document_validity: FileCheck,
-                                address_match: MapPinIcon,
-                                distance_integrity: MapPin,
-                                zoning_cadastral: Shield
-                            };
-
-                            const titles = {
-                                gps_reverse_check: 'GPS Reverse Check',
-                                document_validity: 'Document Validity',
-                                address_match: 'Address Match',
-                                distance_integrity: 'Distance Integrity',
-                                zoning_cadastral: 'Zoning & Cadastral'
-                            };
-
-                            const Icon = icons[key as keyof typeof icons];
-                            const title = titles[key as keyof typeof titles];
-
-                            return (
-                                <div key={key} className={`p-4 rounded-lg border ${getScoreBgColor(check.score)}`}>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Icon className="w-5 h-5" />
-                                            <span className="font-medium">{title}</span>
-                                            {check.passed ? (
-                                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                            ) : (
-                                                <XCircle className="w-4 h-4 text-red-600" />
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className={`font-bold ${getScoreColor(check.score)}`}>
-                                                {check.score}%
-                                            </span>
-                                            <span className="text-xs text-gray-500">
-                                                ({check.confidence}% confidence)
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-gray-600">{check.details}</p>
-                                    <div className="mt-2">
-                                        <div className="w-full bg-gray-200 rounded-full h-2">
-                                            <div
-                                                className={`h-2 rounded-full ${check.score >= 80 ? 'bg-green-500' : check.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                                style={{ width: `${check.score}%` }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="flex-1">
+                        <div className="font-medium mb-1 text-gray-900">Address & Name Match</div>
+                        <div className="mb-1">Address Match: <span className={doc.match.address_match ? 'text-green-700' : 'text-red-700'}>{doc.match.address_match ? 'Yes' : 'No'}</span></div>
+                        <div className="mb-1">Name Match: <span className={doc.match.name_match ? 'text-green-700' : 'text-red-700'}>{doc.match.name_match ? 'Yes' : 'No'}</span></div>
+                        <div className="mb-1">Match Score: <span className="font-bold text-gray-900">{doc.match.match_score}%</span></div>
+                        <div className="mb-1">Confidence: <span className="font-bold text-gray-900">{doc.match.confidence}%</span></div>
+                        <div className="mb-1">Found Addresses: <span className="text-gray-800">{doc.match.found_addresses && doc.match.found_addresses.length > 0 ? doc.match.found_addresses.join(', ') : 'None'}</span></div>
                     </div>
-                </div>
-
-                {/* Recommendations */}
-                {result.recommendations && result.recommendations.length > 0 && (
-                    <div className="p-6 border-b">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                            Recommendations
-                        </h3>
-                        <ul className="space-y-2">
-                            {result.recommendations.map((rec, index) => (
-                                <li key={index} className="flex items-start gap-2">
-                                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                                    <span className="text-gray-700">{rec}</span>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                {/* Summary Stats */}
-                <div className="p-6 border-b bg-gray-50">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-green-600">
-                                {Object.values(result.checks).filter(c => c.passed).length}
-                            </div>
-                            <div className="text-sm text-gray-600">Checks Passed</div>
+                    {imageUrl && (
+                        <div className="flex-shrink-0 flex flex-col items-center justify-center">
+                            <Image src={imageUrl} alt={label + ' preview'} width={160} height={180} className="max-w-[160px] max-h-[180px] rounded shadow border border-gray-300 bg-white" />
+                            <div className="text-xs text-gray-700 mt-1">{label} Image</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-red-600">
-                                {Object.values(result.checks).filter(c => !c.passed).length}
-                            </div>
-                            <div className="text-sm text-gray-600">Checks Failed</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-blue-600">
-                                {Math.round(Object.values(result.checks).reduce((sum, c) => sum + c.confidence, 0) / Object.values(result.checks).length)}%
-                            </div>
-                            <div className="text-sm text-gray-600">Avg Confidence</div>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-2xl font-bold text-gray-700">
-                                <Clock className="w-6 h-6 mx-auto" />
-                            </div>
-                            <div className="text-sm text-gray-600">
-                                {new Date(result.timestamp).toLocaleDateString()}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Actions */}
-                <div className="p-6 flex justify-end gap-3">
-                    <button
-                        onClick={() => setShowResults(false)}
-                        className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-                    >
-                        Close
-                    </button>
-                    <button
-                        onClick={() => handleSubmit()}
-                        className={`px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? (
-                            <span className="flex items-center">
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                Verifying...
-                            </span>
-                        ) : (
-                            'Resubmit'
-                        )}
-                    </button>
-                    <button
-                        onClick={() => {
-                            // Reset form for new verification
-                            setShowResults(false);
-                            setVerificationResult(null);
-                            setFormData({
-                                full_name: '',
-                                phone_number: '',
-                                email: '',
-                                nin_or_bvn: '',
-                                typed_address: '',
-                                gps_latitude: null,
-                                gps_longitude: null,
-                                utility_bill: null,
-                                id_document: null,
-                                land_document: null,
-                                info_consent: false,
-                                data_consent: false
-                            });
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                        New Verification
-                    </button>
+                    )}
                 </div>
             </div>
-        </div>
-    );
+        );
+
+        // Geolocation/IP section
+        const geo = result.checks.gps_reverse_check || {};
+        const dist = result.checks.distance_integrity || {};
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto text-gray-900">
+                    {/* Header */}
+                    <div className={`p-6 ${result.success ? 'bg-green-50' : 'bg-red-50'} border-b`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                {result.success ? (
+                                    <CheckCircle className="w-8 h-8 text-green-600" />
+                                ) : (
+                                    <XCircle className="w-8 h-8 text-red-600" />
+                                )}
+                                <div>
+                                    <h2 className="text-2xl font-bold text-gray-900">
+                                        {result.success ? 'Verification Successful' : 'Verification Failed'}
+                                    </h2>
+                                    <p className="text-gray-600">ID: {result.verification_id}</p>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className={`text-3xl font-bold ${getScoreColor(result.overall_score)}`}>
+                                    {result.overall_score}%
+                                </div>
+                                <p className="text-sm text-gray-600">Overall Score</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Geolocation/IP Section */}
+                    <div className="p-6 border-b bg-gray-50">
+                        <h4 className="text-lg font-semibold mb-2 text-gray-900">IP & Geolocation</h4>
+                        <div className="mb-1">User IP: <span className="font-mono text-blue-700">{result.ip || geo.ip || 'N/A'}</span></div>
+                        <div className="mb-1">Location: <span className="text-gray-800">{geo.city || 'Unknown City'}, {geo.region || 'Unknown Region'}, {geo.country || 'Unknown Country'}</span></div>
+                        <div className="mb-1">ISP: <span className="text-gray-800">{geo.isp || 'Unknown ISP'}</span></div>
+                        <div className="mb-1">Distance Integrity: <span className={dist.passed ? 'text-green-700' : 'text-red-700'}>{dist.passed ? 'Within acceptable range' : 'Too far from address'}</span></div>
+                        <div className="mb-1">Details: <span className="text-gray-800">{dist.details || geo.details}</span></div>
+                    </div>
+
+                    {/* Utility Bill Section */}
+                    <div className="p-6 border-b">
+                        {renderDocSection('Utility Bill', result.checks.utility_bill, utilityBillUrl || undefined)}
+                    </div>
+
+                    {/* ID Document Section */}
+                    <div className="p-6 border-b">
+                        {renderDocSection('ID Document', result.checks.id_document, idDocumentUrl || undefined)}
+                    </div>
+
+                    {/* Zoning/Cadastral Section */}
+                    <div className="p-6 border-b">
+                        <h4 className="text-lg font-semibold mb-2 text-gray-900">Zoning/Cadastral</h4>
+                        <div className="mb-1">Status: <span className={result.checks.zoning_cadastral.passed ? 'text-green-700' : 'text-red-700'}>{result.checks.zoning_cadastral.passed ? 'Passed' : 'Failed'}</span></div>
+                        <div className="mb-1">Score: <span className="font-bold text-gray-900">{result.checks.zoning_cadastral.score}%</span></div>
+                        <div className="mb-1">Confidence: <span className="font-bold text-gray-900">{result.checks.zoning_cadastral.confidence}%</span></div>
+                        <div className="mb-1">Details: <span className="text-gray-800">{result.checks.zoning_cadastral.details}</span></div>
+                    </div>
+
+                    {/* Recommendations */}
+                    {result.recommendations && result.recommendations.length > 0 && (
+                        <div className="p-6 border-b">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+                                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                                Recommendations
+                            </h3>
+                            <ul className="space-y-2">
+                                {result.recommendations.map((rec, index) => (
+                                    <li key={index} className="flex items-start gap-2">
+                                        <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
+                                        <span className="text-gray-800">{rec}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="p-6 flex justify-end gap-3">
+                        <button
+                            onClick={() => setShowResults(false)}
+                            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+                        >
+                            Close
+                        </button>
+                        <button
+                            onClick={() => handleSubmit()}
+                            className={`px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <span className="flex items-center">
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                    Verifying...
+                                </span>
+                            ) : (
+                                'Resubmit'
+                            )}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setShowResults(false);
+                                setVerificationResult(null);
+                                setFormData({
+                                    full_name: '',
+                                    phone_number: '',
+                                    email: '',
+                                    nin_or_bvn: '',
+                                    typed_address: '',
+                                    utility_bill: null,
+                                    id_document: null,
+                                    land_document: null,
+                                    info_consent: false,
+                                    data_consent: false
+                                });
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        >
+                            New Verification
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     // If verification results are showing, render the ResultsDisplay
     if (showResults && verificationResult) {
@@ -616,10 +455,8 @@ const AddressVerificationForm: React.FC = () => {
 
             <div className="mb-8 text-center">
                 <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Address Verification</h1>
-                <p className="text-gray-600">Fill out the form below to verify your address using GPS and documents.</p>
+                <p className="text-gray-600">Fill out the form below to verify your address using documents.</p>
             </div>
-
-            <LocationStatus />
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Personal Information Section */}
@@ -688,7 +525,7 @@ const AddressVerificationForm: React.FC = () => {
 
                 {/* Address Information Section */}
                 <div className="p-6 border border-gray-200 rounded-lg bg-gray-50">
-                    <h2 className="text-xl font-semibold mb-5 text-gray-800 border-b pb-3">2. Address & GPS Information</h2>
+                    <h2 className="text-xl font-semibold mb-5 text-gray-800 border-b pb-3">2. Address Information</h2>
 
                     <div>
                         <label htmlFor="typed_address" className="block text-sm font-medium text-gray-700 mb-1">
@@ -703,73 +540,6 @@ const AddressVerificationForm: React.FC = () => {
                             placeholder="Enter the complete address (e.g., 10 Ogudu Road, Lagos)"
                             required
                         />
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border">
-                        <div className="flex items-center justify-between mb-3">
-                            <h3 className="font-medium text-gray-900">GPS Location</h3>
-                            <div className="flex gap-2">
-                                {userLocation && (
-                                    <button
-                                        type="button"
-                                        onClick={resetToUserLocation}
-                                        className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                                        title="Reset to device location"
-                                    >
-                                        <RefreshCw className="w-4 h-4" />
-                                        Reset
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    onClick={simulateMapPin}
-                                    className="flex items-center gap-2 px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                >
-                                    <MapPin className="w-4 h-4" />
-                                    Drop Pin
-                                </button>
-                            </div>
-                        </div>
-
-                        {pinLocation ? (
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    {pinDropped && (
-                                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                    )}
-                                    <div className="text-sm text-gray-600">
-                                        <strong>Latitude:</strong> {pinLocation.latitude.toFixed(6)}
-                                    </div>
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                    <strong>Longitude:</strong> {pinLocation.longitude.toFixed(6)}
-                                </div>
-                                {userLocation && pinDropped && (
-                                    <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                                        📍 Custom pin location set! Distance from device: {
-                                            Math.round(
-                                                Math.sqrt(
-                                                    Math.pow((pinLocation.latitude - userLocation.latitude) * 111000, 2) +
-                                                    Math.pow((pinLocation.longitude - userLocation.longitude) * 111000, 2)
-                                                )
-                                            )
-                                        }m
-                                    </div>
-                                )}
-                                {userLocation && !pinDropped && (
-                                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
-                                        📱 Using device location
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="text-sm text-gray-500 text-center py-4 border-2 border-dashed border-gray-300 rounded">
-                                No location selected. Drop a pin to set coordinates.
-                            </div>
-                        )}
-                        {(!formData.gps_latitude || !formData.gps_longitude) && (
-                            <p className="text-red-500 text-sm mt-2">GPS location is required.</p>
-                        )}
                     </div>
                 </div>
 

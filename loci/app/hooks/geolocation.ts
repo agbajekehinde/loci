@@ -1,147 +1,60 @@
-// hooks/useGeolocation.ts
+// utils/getIpAndLocation.ts
+import type { NextRequest } from 'next/server';
 
-import { useState, useEffect, useCallback } from 'react';
+export async function getIpAndLocation(req: NextRequest) {
+  // Try multiple headers for IP detection
+  const forwarded = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  const cfConnectingIp = req.headers.get('cf-connecting-ip');
+  
+  let ip = forwarded
+    ? forwarded.split(',')[0].trim()
+    : realIp || cfConnectingIp || null;
 
-interface Location {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-}
+  console.log('IP detection:', { 
+    forwarded, 
+    realIp, 
+    cfConnectingIp, 
+    finalIp: ip 
+  });
 
-interface GeolocationState {
-  location: Location | null;
-  pinLocation: Location | null;
-  status: 'requesting' | 'granted' | 'denied' | 'unavailable';
-  pinDropped: boolean;
-  error: string | null;
-}
+  // For localhost testing, use a fallback IP
+  if (!ip || ip === 'localhost' || ip === '127.0.0.1' || ip === '::1') {
+    console.log('Using fallback IP for localhost testing');
+    ip = '8.8.8.8'; // Google's public DNS as fallback for testing
+  }
 
-interface GeolocationActions {
-  requestLocation: () => void;
-  simulateMapPin: () => void;
-  resetToUserLocation: () => void;
-  setPinLocation: (location: Location) => void;
-}
+  if (!ip) {
+    console.log('No IP detected, returning null location');
+    return { ip: null, location: null };
+  }
 
-export const useGeolocation = (): GeolocationState & GeolocationActions => {
-  const [location, setLocation] = useState<Location | null>(null);
-  const [pinLocation, setPinLocationState] = useState<Location | null>(null);
-  const [status, setStatus] = useState<'requesting' | 'granted' | 'denied' | 'unavailable'>('requesting');
-  const [pinDropped, setPinDropped] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const requestNotificationPermission = useCallback(async () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          new Notification('LandVerify', {
-            body: 'Please allow location access to verify your address',
-            icon: '/favicon.ico'
-          });
-        }
-      } catch (error) {
-        console.error('Notification permission error:', error);
-      }
-    }
-  }, []);
-
-  const requestLocation = useCallback(async () => {
-    if (!navigator.geolocation) {
-      setStatus('unavailable');
-      setError('Geolocation is not supported by this browser');
-      return;
+  try {
+    console.log('Fetching location data for IP:', ip);
+    const res = await fetch(`https://ipapi.co/${ip}/json/`);
+    console.log('IP API response status:', res.status);
+    
+    if (!res.ok) {
+      console.log('IP API response not ok, returning null location');
+      return { ip, location: null };
     }
 
-    await requestNotificationPermission();
-
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 60000
+    const data = await res.json();
+    console.log('IP API response data:', data);
+    
+    const location = {
+      city: data.city,
+      region: data.region,
+      country: data.country_name,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      isp: data.org,
     };
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const newLocation: Location = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy
-        };
-        
-        setLocation(newLocation);
-        setPinLocationState(newLocation);
-        setStatus('granted');
-        setError(null);
-        
-        if (Notification.permission === 'granted') {
-          new Notification('Location Access Granted', {
-            body: 'Your location has been captured for address verification',
-            icon: '/favicon.ico'
-          });
-        }
-      },
-      (error) => {
-        console.error('Location error:', error);
-        setStatus('denied');
-        setError(error.message);
-        
-        if (Notification.permission === 'granted') {
-          new Notification('Location Access Denied', {
-            body: 'Manual pin drop will be required for verification',
-            icon: '/favicon.ico'
-          });
-        }
-      },
-      options
-    );
-  }, [requestNotificationPermission]);
-
-  const simulateMapPin = () => {
-    const baseLocation = location || { latitude: 6.5244, longitude: 3.3792 }; // Default to Lagos
-    const offset = 0.01;
-    
-    const newPin: Location = {
-      latitude: baseLocation.latitude + (Math.random() - 0.5) * offset,
-      longitude: baseLocation.longitude + (Math.random() - 0.5) * offset
-    };
-    
-    setPinLocationState(newPin);
-    setPinDropped(true);
-
-    if (Notification.permission === 'granted') {
-      new Notification('Location Pin Updated', {
-        body: `New coordinates: ${newPin.latitude.toFixed(6)}, ${newPin.longitude.toFixed(6)}`,
-        icon: '/favicon.ico'
-      });
-    }
-  };
-
-  const resetToUserLocation = () => {
-    if (location) {
-      setPinLocationState(location);
-      setPinDropped(false);
-    }
-  };
-
-  const setPinLocation = (newLocation: Location) => {
-    setPinLocationState(newLocation);
-    setPinDropped(true);
-  };
-
-  useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
-
-  return {
-    location,
-    pinLocation,
-    status,
-    pinDropped,
-    error,
-    requestLocation,
-    simulateMapPin,
-    resetToUserLocation,
-    setPinLocation
-  };
-};
+    console.log('Processed location data:', location);
+    return { ip, location };
+  } catch (err) {
+    console.error('Geo lookup error:', err);
+    return { ip, location: null };
+  }
+}

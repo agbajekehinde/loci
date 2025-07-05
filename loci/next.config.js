@@ -33,6 +33,20 @@ const nextConfig = {
         contextRegExp: /moment$/,
       })
     );
+    // Ignore test files and directories during build
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/test\//,
+        contextRegExp: /.*/,
+      })
+    );
+    // Ignore specific test files
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /05-versions-space\.pdf$/,
+        contextRegExp: /.*/,
+      })
+    );
     return config;
   },
   // Configure headers for WASM files
@@ -62,6 +76,10 @@ const nextConfig = {
       },
     ];
   },
+  // Exclude test files from build
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'].filter(ext => !ext.includes('test')),
+  // Exclude test directories from build
+  distDir: '.next',
 };
 
 /*

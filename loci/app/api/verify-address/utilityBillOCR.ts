@@ -1,10 +1,12 @@
 // utils/utilityBillOCR.ts
 import { createWorker, Worker } from 'tesseract.js';
-import { fromPath as pdf2picFromPath } from 'pdf2pic';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import pdfParse from 'pdf-parse';
+
+// Environment check to prevent test file access in production
+const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 
 interface OCRResult {
   extractedText: string;
@@ -87,8 +89,18 @@ class UtilityBillOCR {
       // Detect PDF by magic number
       if (Buffer.isBuffer(imageInput) && imageInput.subarray(0, 4).toString() === '%PDF') {
         isPDF = true;
-        tempPDFPath = path.join(os.tmpdir(), `ocr_temp_${Date.now()}.pdf`);
-        fs.writeFileSync(tempPDFPath, imageInput);
+        // Ensure we're not in a test environment and use a safe temp path
+        if (isProduction || !isTest) {
+          tempPDFPath = path.join(os.tmpdir(), `ocr_temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.pdf`);
+          try {
+            fs.writeFileSync(tempPDFPath, imageInput);
+          } catch (writeError) {
+            console.error('Failed to write temp PDF file:', writeError);
+            throw new Error('Failed to process PDF file');
+          }
+        } else {
+          throw new Error('PDF processing not available in test environment');
+        }
       }
 
       let extractedText = '';
@@ -96,6 +108,10 @@ class UtilityBillOCR {
       
       if (isPDF && tempPDFPath) {
         try {
+          // Dynamic imports to prevent build-time issues
+          const pdfParse = (await import('pdf-parse')).default;
+          const { fromPath: pdf2picFromPath } = await import('pdf2pic');
+          
           // Hybrid approach: Try direct PDF text extraction first
           let directText = '';
           try {
@@ -110,7 +126,12 @@ class UtilityBillOCR {
           if (directText && directText.trim().length > 50) {
             extractedText = directText;
             confidence = 100;
-            fs.unlinkSync(tempPDFPath);
+            // Clean up temp file
+            try {
+              fs.unlinkSync(tempPDFPath);
+            } catch (cleanupError) {
+              console.warn('Failed to cleanup temp PDF file:', cleanupError);
+            }
           } else {
             // Fallback: Convert all pages to images and OCR using pdf2pic
             try {
@@ -147,15 +168,23 @@ class UtilityBillOCR {
                     }
                   }
                   // Clean up the image file
-                  fs.unlinkSync(imagePath);
+                  try {
+                    fs.unlinkSync(imagePath);
+                  } catch (cleanupError) {
+                    console.warn('Failed to cleanup image file:', cleanupError);
+                  }
                 } catch (pageError) {
                   console.warn(`Failed to process page ${i}:`, pageError);
                   continue;
                 }
               }
               // Clean up temp dir and PDF
-              fs.unlinkSync(tempPDFPath);
-              fs.rmSync(tempDir, { recursive: true });
+              try {
+                fs.unlinkSync(tempPDFPath);
+                fs.rmSync(tempDir, { recursive: true });
+              } catch (cleanupError) {
+                console.warn('Failed to cleanup temp files:', cleanupError);
+              }
               extractedText = allText.trim();
               confidence = pageCount > 0 ? totalConfidence / pageCount : 0;
               if (!extractedText || extractedText.length < 10) {
@@ -167,8 +196,13 @@ class UtilityBillOCR {
             }
           }
         } catch (pdfProcessingError) {
+          // Clean up temp file if it exists
           if (tempPDFPath && fs.existsSync(tempPDFPath)) {
-            fs.unlinkSync(tempPDFPath);
+            try {
+              fs.unlinkSync(tempPDFPath);
+            } catch (cleanupError) {
+              console.warn('Failed to cleanup temp PDF file:', cleanupError);
+            }
           }
           throw pdfProcessingError;
         }

@@ -7,11 +7,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:analyze": "ANALYZE=true next build",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@thednp/dommatrix": "^2.0.12",
-    "canvas": "^3.1.0",
+    "canvas": "^3.1.2",
     "dommatrix": "^1.0.3",
     "exif-parser": "^0.1.12",
     "file-type": "^21.0.0",
@@ -42,7 +44,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "canvas",
       "tesseract.js"
     ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
   }
 }

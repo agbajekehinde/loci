@@ -264,47 +264,61 @@ async function verifyImage(buffer: Buffer) {
 
 async function verifyPDF(buffer: Buffer) {
   let worker = null;
-  let tempPDFPath = '';
   try {
-    // Write buffer to a temp file
-    tempPDFPath = path.join(os.tmpdir(), `docvalid_temp_${Date.now()}.pdf`);
-    fs.writeFileSync(tempPDFPath, buffer);
-
-    // Convert each page to image and OCR
+    // Initialize Tesseract worker
+    worker = await createWorker('eng');
+    // Use pdf-parse to get number of pages
+    const pdfParse = (await import('pdf-parse')).default;
+    const pdf2picFromPath = (await import('pdf2pic')).fromPath;
+    const fs = (await import('fs')).default;
+    const os = (await import('os')).default;
+    const path = (await import('path')).default;
+    const pdfBuffer = buffer;
+    const pdfData = await pdfParse(pdfBuffer);
+    const numPages = pdfData.numpages || 1;
+    // Write buffer to temp file
+    const tempPDFPath = path.join(os.tmpdir(), `ocr_temp_${Date.now()}.pdf`);
+    fs.writeFileSync(tempPDFPath, pdfBuffer);
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ocr_pdf_'));
     const pdf2pic = pdf2picFromPath(tempPDFPath, {
       density: 200,
+      saveFilename: 'page',
+      savePath: tempDir,
       format: 'png',
-      saveFilename: `docvalid_page_${Date.now()}`,
-      savePath: os.tmpdir(),
+      width: 1200,
+      height: 1600,
     });
-    // Get number of pages (pdf2pic.info is not available, so try to convert until fail or use a library to count pages)
-    // We'll use a simple approach: try up to 20 pages, stop if conversion fails
-    let extractedText = '';
+    let allText = '';
     let totalConfidence = 0;
     let pageCount = 0;
-    const issues = [];
-    worker = await createWorker('eng');
-    for (let page = 1; page <= 20; page++) {
+    for (let i = 1; i <= numPages; i++) {
       try {
-        const result = await pdf2pic(page);
-        const pageImagePath = result.path;
-        if (!pageImagePath) break;
-        const pageBuffer = fs.readFileSync(pageImagePath);
-        const { data } = await worker.recognize(pageBuffer);
-        extractedText += data.text + '\n';
-        totalConfidence += data.confidence;
-        pageCount++;
-        fs.unlinkSync(pageImagePath);
-        // Stop if the image is empty (pdf2pic returns a blank image for non-existent pages)
-        if (!data.text || data.text.trim().length === 0) break;
-      } catch {
-        break;
+        const output = await pdf2pic(i);
+        if (!output.path) {
+          console.warn(`No image path for page ${i}, skipping.`);
+          continue;
+        }
+        const imagePath = output.path;
+        const imageBuffer = fs.readFileSync(imagePath);
+        const { data } = await worker.recognize(imageBuffer);
+        if (data.text && data.text.trim().length > 0) {
+          allText += data.text + '\n';
+          totalConfidence += data.confidence !== undefined ? data.confidence : 0;
+          pageCount++;
+        }
+        // Clean up the image file
+        fs.unlinkSync(imagePath);
+      } catch (pageError) {
+        console.warn(`Failed to process page ${i}:`, pageError);
+        continue;
       }
     }
-    if (pageCount === 0) {
-      issues.push('No readable pages found in PDF.');
-    }
+    // Clean up temp dir and PDF
+    fs.unlinkSync(tempPDFPath);
+    fs.rmSync(tempDir, { recursive: true });
+    const extractedText = allText.trim();
     const ocrConfidence = pageCount > 0 ? totalConfidence / pageCount : 0;
+    const issues = [];
     if (ocrConfidence < 60) {
       issues.push(`OCR confidence is low (${ocrConfidence}). PDF may be blurry or unclear.`);
     }
@@ -312,24 +326,28 @@ async function verifyPDF(buffer: Buffer) {
       issues.push('Extracted text is too short. Document may be unreadable or unclear.');
     }
     const authenticityScore = Math.max(0, 100 - (issues.length * 20));
-    // Clean up temp PDF
-    fs.unlinkSync(tempPDFPath);
-    if (worker) await worker.terminate();
     return {
       authenticityScore,
       issuesFound: issues,
-      extractedText: extractedText.trim(),
+      extractedText: extractedText,
       ocrConfidence,
     };
   } catch (error) {
-    if (worker) await worker.terminate();
-    if (tempPDFPath && fs.existsSync(tempPDFPath)) fs.unlinkSync(tempPDFPath);
     console.error('Error verifying PDF:', error);
     return {
       authenticityScore: 0,
       issuesFound: [`PDF verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
       extractedText: '',
+      ocrConfidence: 0,
     };
+  } finally {
+    if (worker) {
+      try {
+        await worker.terminate();
+      } catch (terminateError) {
+        console.warn('Error terminating worker:', terminateError);
+      }
+    }
   }
 }
 

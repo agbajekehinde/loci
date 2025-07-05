@@ -95,60 +95,97 @@ class UtilityBillOCR {
       let confidence = 0;
       
       if (isPDF && tempPDFPath) {
-        // Hybrid approach: Try direct PDF text extraction first
-        let directText = '';
         try {
-          const pdfBuffer = fs.readFileSync(tempPDFPath);
-          const pdfData = await pdfParse(pdfBuffer);
-          directText = pdfData.text || '';
-        } catch {
-          directText = '';
-        }
-        
-        if (directText && directText.trim().length > 50) {
-          extractedText = directText;
-          confidence = 100;
-          fs.unlinkSync(tempPDFPath);
-        } else {
-          // Fallback: Convert pages to images and OCR
-          const pdf2pic = pdf2picFromPath(tempPDFPath, {
-            density: 200,
-            format: 'png',
-            saveFilename: `ocr_page_${Date.now()}`,
-            savePath: os.tmpdir(),
-          });
-          
-          let totalConfidence = 0;
-          let pageCount = 0;
-          
-          for (let page = 1; page <= 20; page++) {
-            const result = await pdf2pic(page);
-            const pageImagePath = result.path;
-            if (!pageImagePath) break;
-            
-            const pageBuffer = fs.readFileSync(pageImagePath);
-            const { data } = await this.worker!.recognize(pageBuffer);
-            
-            if (!data.text || data.text.trim().length === 0) {
-              fs.unlinkSync(pageImagePath);
-              break;
-            }
-            
-            extractedText += data.text + '\n';
-            totalConfidence += data.confidence;
-            pageCount++;
-            
-            fs.unlinkSync(pageImagePath);
+          // Hybrid approach: Try direct PDF text extraction first
+          let directText = '';
+          try {
+            const pdfBuffer = fs.readFileSync(tempPDFPath);
+            const pdfData = await pdfParse(pdfBuffer);
+            directText = pdfData.text || '';
+          } catch (parseError) {
+            console.warn('PDF parse failed, falling back to OCR:', parseError);
+            directText = '';
           }
           
-          confidence = pageCount > 0 ? totalConfidence / pageCount : 0;
-          fs.unlinkSync(tempPDFPath);
+          if (directText && directText.trim().length > 50) {
+            extractedText = directText;
+            confidence = 100;
+            fs.unlinkSync(tempPDFPath);
+          } else {
+            // Fallback: Convert all pages to images and OCR using pdf2pic
+            try {
+              const pdfBuffer = fs.readFileSync(tempPDFPath);
+              const pdfData = await pdfParse(pdfBuffer);
+              const numPages = pdfData.numpages || 1;
+              const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ocr_pdf_'));
+              const pdf2pic = pdf2picFromPath(tempPDFPath, {
+                density: 200,
+                saveFilename: 'page',
+                savePath: tempDir,
+                format: 'png',
+                width: 1200,
+                height: 1600,
+              });
+              let allText = '';
+              let totalConfidence = 0;
+              let pageCount = 0;
+              for (let i = 1; i <= numPages; i++) {
+                try {
+                  const output = await pdf2pic(i);
+                  if (!output.path) {
+                    console.warn(`No image path for page ${i}, skipping.`);
+                    continue;
+                  }
+                  const imagePath = output.path;
+                  const imageBuffer = fs.readFileSync(imagePath);
+                  if (this.worker) {
+                    const { data } = await this.worker.recognize(imageBuffer);
+                    if (data.text && data.text.trim().length > 0) {
+                      allText += data.text + '\n';
+                      totalConfidence += data.confidence !== undefined ? data.confidence : 0;
+                      pageCount++;
+                    }
+                  }
+                  // Clean up the image file
+                  fs.unlinkSync(imagePath);
+                } catch (pageError) {
+                  console.warn(`Failed to process page ${i}:`, pageError);
+                  continue;
+                }
+              }
+              // Clean up temp dir and PDF
+              fs.unlinkSync(tempPDFPath);
+              fs.rmSync(tempDir, { recursive: true });
+              extractedText = allText.trim();
+              confidence = pageCount > 0 ? totalConfidence / pageCount : 0;
+              if (!extractedText || extractedText.length < 10) {
+                throw new Error('No text could be extracted from PDF pages');
+              }
+            } catch (pdfError) {
+              console.error('PDF processing failed:', pdfError);
+              throw new Error(`PDF OCR failed: ${pdfError instanceof Error ? pdfError.message : 'Unknown PDF processing error'}`);
+            }
+          }
+        } catch (pdfProcessingError) {
+          if (tempPDFPath && fs.existsSync(tempPDFPath)) {
+            fs.unlinkSync(tempPDFPath);
+          }
+          throw pdfProcessingError;
         }
       } else {
         // Normal image OCR
-        const { data } = await this.worker!.recognize(imageInput);
-        extractedText = data.text;
-        confidence = data.confidence;
+        if (!this.worker) {
+          throw new Error('OCR worker not initialized');
+        }
+        
+        const { data } = await this.worker.recognize(imageInput);
+        extractedText = data.text || '';
+        confidence = data.confidence || 0;
+      }
+
+      // Validate extracted text
+      if (!extractedText || extractedText.trim().length < 5) {
+        throw new Error('No text could be extracted from the document');
       }
 
       const foundAddresses = this.extractAddresses(extractedText);

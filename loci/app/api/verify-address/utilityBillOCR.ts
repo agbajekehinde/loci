@@ -8,6 +8,16 @@ import path from 'path';
 const isProduction = process.env.NODE_ENV === 'production';
 const isTest = process.env.NODE_ENV === 'test';
 
+// Helper to get WASM path for Tesseract.js in production
+function getTesseractCorePath() {
+  if (isProduction) {
+    // Use the public/wasm path in production (Vercel)
+    return '/wasm/tesseract-core-simd.wasm';
+  }
+  // Default: let tesseract.js resolve it
+  return undefined;
+}
+
 interface OCRResult {
   extractedText: string;
   addressMatched: boolean;
@@ -46,7 +56,11 @@ class UtilityBillOCR {
 
   async initialize(): Promise<void> {
     if (!this.worker) {
-      this.worker = await createWorker('eng');
+      this.worker = await createWorker(
+        'eng',
+        undefined,
+        { corePath: getTesseractCorePath() }
+      );
     }
   }
 

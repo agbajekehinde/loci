@@ -1,4 +1,6 @@
 // next.config.js
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Move serverComponentsExternalPackages to top level as serverExternalPackages
@@ -14,6 +16,7 @@ const nextConfig = {
       asyncWebAssembly: true,
       layers: true,
     };
+    
     // Add fallbacks for Node.js modules
     config.resolve.fallback = {
       ...config.resolve.fallback,
@@ -21,11 +24,39 @@ const nextConfig = {
       path: false,
       crypto: false,
     };
+    
     // Handle Tesseract.js specific issues
     config.module.rules.push({
       test: /\.wasm$/,
       type: 'webassembly/async',
     });
+    
+    // Copy WASM files to public directory for static serving
+    if (!isServer) {
+      config.plugins.push(
+        new CopyWebpackPlugin({
+          patterns: [
+            {
+              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
+              to: 'public/wasm/',
+            },
+            {
+              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
+              to: 'public/wasm/',
+            },
+            {
+              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
+              to: 'public/wasm/',
+            },
+            {
+              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
+              to: 'public/wasm/',
+            },
+          ],
+        })
+      );
+    }
+    
     // Ignore problematic files during build
     config.plugins.push(
       new webpack.IgnorePlugin({
@@ -62,6 +93,19 @@ const nextConfig = {
           {
             key: 'Cross-Origin-Opener-Policy',
             value: 'same-origin',
+          },
+        ],
+      },
+      {
+        source: '/wasm/(.*)',
+        headers: [
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'credentialless',
+          },
+          {
+            key: 'Content-Type',
+            value: 'application/wasm',
           },
         ],
       },

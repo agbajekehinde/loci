@@ -31,31 +31,29 @@ const nextConfig = {
       type: 'webassembly/async',
     });
     
-    // Copy WASM files to public directory for static serving
-    if (!isServer) {
-      config.plugins.push(
-        new CopyWebpackPlugin({
-          patterns: [
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
-              to: 'public/wasm/',
-            },
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
-              to: 'public/wasm/',
-            },
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
-              to: 'public/wasm/',
-            },
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
-              to: 'public/wasm/',
-            },
-          ],
-        })
-      );
-    }
+    // Copy WASM files to public directory for static serving (both client and server)
+    config.plugins.push(
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
+            to: 'public/wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
+            to: 'public/wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
+            to: 'public/wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
+            to: 'public/wasm/',
+          },
+        ],
+      })
+    );
     
     // Ignore problematic files during build
     config.plugins.push(

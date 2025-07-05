@@ -1,10 +1,6 @@
 // lib/runVerificationChecks.ts
 import sharp from 'sharp';
 import { createWorker } from 'tesseract.js';
-import { fromPath as pdf2picFromPath } from 'pdf2pic';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
 
 export async function runVerificationChecks(base64Data: string) {
   try {

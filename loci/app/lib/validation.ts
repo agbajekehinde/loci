@@ -7,7 +7,7 @@ export interface VerificationRequest {
   gps_longitude?: number;
 }
 
-export function validateVerificationRequest(data: any): { isValid: boolean; errors: string[] } {
+export function validateVerificationRequest(data: VerificationRequest): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
 
   // Required fields

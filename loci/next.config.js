@@ -51,10 +51,6 @@ const nextConfig = {
             from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
             to: 'public/wasm/',
           },
-          {
-            from: 'node_modules/.pnpm/tesseract.js@6.0.1/node_modules/tesseract.js/dist/worker.min.js',
-            to: 'public/wasm/',
-          },
         ],
       })
     );

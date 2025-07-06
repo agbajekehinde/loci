@@ -18,16 +18,6 @@ function getTesseractCorePath() {
   return undefined;
 }
 
-// Helper to get worker script path for Tesseract.js in production
-function getTesseractWorkerPath() {
-  if (isProduction) {
-    // Use the public/wasm path for worker script in production
-    return '/wasm/worker.min.js';
-  }
-  // Default: let tesseract.js resolve it
-  return undefined;
-}
-
 interface OCRResult {
   extractedText: string;
   addressMatched: boolean;
@@ -70,8 +60,7 @@ class UtilityBillOCR {
         'eng',
         undefined,
         { 
-          corePath: getTesseractCorePath(),
-          workerPath: getTesseractWorkerPath()
+          corePath: getTesseractCorePath()
         }
       );
     }

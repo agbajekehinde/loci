@@ -51,6 +51,23 @@ const nextConfig = {
             from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
             to: 'public/wasm/',
           },
+          // Copy to root wasm directory for server-side access
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
+            to: 'wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
+            to: 'wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
+            to: 'wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
+            to: 'wasm/',
+          },
         ],
       })
     );

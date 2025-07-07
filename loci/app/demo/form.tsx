@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Loader2, CheckCircle, XCircle, AlertTriangle, Shield } from 'lucide-react';
 import Image from 'next/image';
-import useClientSideOCR from '@/app/components/ClientSideOCR';
 
 // Interfaces for data structures
 interface FormDataType {
@@ -75,11 +74,6 @@ const AddressVerificationForm: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
     const [showResults, setShowResults] = useState<boolean>(false);
-    const [currentStep, setCurrentStep] = useState<string>('');
-    
-    // Initialize client-side OCR
-    const { processImage } = useClientSideOCR();
-    
     const [formData, setFormData] = useState<FormDataType>({
         full_name: '',
         phone_number: '',
@@ -165,26 +159,9 @@ const AddressVerificationForm: React.FC = () => {
         }
 
         setIsSubmitting(true);
-        setCurrentStep('Processing documents...');
 
         try {
-            // Step 1: Process OCR on client-side
-            setCurrentStep('Processing utility bill...');
-            const utilityBillOCR = await processImage(
-                formData.utility_bill!,
-                formData.typed_address,
-                formData.full_name
-            );
-
-            setCurrentStep('Processing ID document...');
-            const idDocumentOCR = await processImage(
-                formData.id_document!,
-                formData.typed_address,
-                formData.full_name
-            );
-
-            // Step 2: Convert files to base64 for server-side processing
-            setCurrentStep('Preparing documents for verification...');
+            // Convert files to base64
             const utilityBillBase64 = formData.utility_bill ? await fileToBase64(formData.utility_bill) : '';
             const idDocumentBase64 = formData.id_document ? await fileToBase64(formData.id_document) : '';
             const landDocumentBase64 = formData.land_document ? await fileToBase64(formData.land_document) : '';
@@ -197,17 +174,12 @@ const AddressVerificationForm: React.FC = () => {
                 typed_address: formData.typed_address,
                 utility_bill: utilityBillBase64,
                 id_document: idDocumentBase64,
-                land_document: landDocumentBase64,
-                client_ocr_results: {
-                    utility_bill: utilityBillOCR,
-                    id_document: idDocumentOCR
-                }
+                land_document: landDocumentBase64
             };
 
             console.log('Sending verification request...', payload);
 
-            setCurrentStep('Verifying with server...');
-            const response = await fetch('/api/verify-address/client', {
+            const response = await fetch('/api/verify-address', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -279,7 +251,15 @@ const AddressVerificationForm: React.FC = () => {
                     <div className="space-y-2 text-sm text-left">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span>{currentStep}</span>
+                            <span>Document authenticity check...</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span>Address matching analysis...</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <span>Zoning and cadastral overlay...</span>
                         </div>
                     </div>
                 </div>

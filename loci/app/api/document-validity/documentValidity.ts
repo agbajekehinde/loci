@@ -263,9 +263,25 @@ async function verifyPDF(buffer: Buffer) {
   try {
     // Initialize Tesseract worker
     worker = await createWorker('eng');
+    
     // Use pdf-parse to get number of pages
-    const pdfParse = (await import('pdf-parse')).default;
-    const pdf2picFromPath = (await import('pdf2pic')).fromPath;
+    let pdfParse, pdf2picFromPath;
+    
+    try {
+      pdfParse = (await import('pdf-parse')).default;
+    } catch (importError) {
+      console.error('Failed to import pdf-parse:', importError);
+      throw new Error('PDF parsing library not available');
+    }
+    
+    try {
+      const pdf2picModule = await import('pdf2pic');
+      pdf2picFromPath = pdf2picModule.fromPath;
+    } catch (importError) {
+      console.error('Failed to import pdf2pic:', importError);
+      throw new Error('PDF to image conversion library not available');
+    }
+    
     const fs = (await import('fs')).default;
     const os = (await import('os')).default;
     const path = (await import('path')).default;
@@ -330,18 +346,45 @@ async function verifyPDF(buffer: Buffer) {
     };
   } catch (error) {
     console.error('Error verifying PDF:', error);
-    return {
-      authenticityScore: 0,
-      issuesFound: [`PDF verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
-      extractedText: '',
-      ocrConfidence: 0,
-    };
-  } finally {
-    if (worker) {
-      try {
-        await worker.terminate();
-      } catch (terminateError) {
-        console.warn('Error terminating worker:', terminateError);
+    
+    // Fallback: try to process as image if PDF libraries failed
+    try {
+      console.warn('PDF processing failed, attempting fallback image processing:', error);
+      worker = await createWorker('eng');
+      const { data } = await worker.recognize(buffer);
+      const extractedText = data.text || '';
+      const ocrConfidence = data.confidence || 0;
+      
+      const issues = [];
+      if (ocrConfidence < 60) {
+        issues.push(`OCR confidence is low (${ocrConfidence}). Document may be blurry or unclear.`);
+      }
+      if (!extractedText || extractedText.trim().length < 20) {
+        issues.push('Extracted text is too short. Document may be unreadable or unclear.');
+      }
+      
+      const authenticityScore = Math.max(0, 100 - (issues.length * 20));
+      return {
+        authenticityScore,
+        issuesFound: issues,
+        extractedText: extractedText,
+        ocrConfidence,
+      };
+    } catch (fallbackError) {
+      console.error('PDF fallback processing also failed:', fallbackError);
+      return {
+        authenticityScore: 0,
+        issuesFound: [`PDF verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`],
+        extractedText: '',
+        ocrConfidence: 0,
+      };
+    } finally {
+      if (worker) {
+        try {
+          await worker.terminate();
+        } catch (terminateError) {
+          console.warn('Error terminating worker:', terminateError);
+        }
       }
     }
   }

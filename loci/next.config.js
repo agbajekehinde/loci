@@ -3,58 +3,74 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove server-side Tesseract.js dependencies
+  // Move serverComponentsExternalPackages to top level as serverExternalPackages
+  serverExternalPackages: ['tesseract.js', 'canvas'],
   experimental: {
     // Other experimental features can go here
   },
-  // Configure webpack for client-side WASM handling only
+  // Configure webpack for better WASM handling
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Handle WASM files for client-side only
-    if (!isServer) {
-      config.experiments = {
-        ...config.experiments,
-        asyncWebAssembly: true,
-        layers: true,
-      };
-      
-      // Add fallbacks for Node.js modules (client-side only)
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        path: false,
-        crypto: false,
-      };
-      
-      // Handle Tesseract.js specific issues (client-side only)
-      config.module.rules.push({
-        test: /\.wasm$/,
-        type: 'webassembly/async',
-      });
-      
-      // Copy WASM files to public directory for static serving (client-side only)
-      config.plugins.push(
-        new CopyWebpackPlugin({
-          patterns: [
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
-              to: 'public/wasm/',
-            },
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
-              to: 'public/wasm/',
-            },
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
-              to: 'public/wasm/',
-            },
-            {
-              from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
-              to: 'public/wasm/',
-            },
-          ],
-        })
-      );
-    }
+    // Handle WASM files
+    config.experiments = {
+      ...config.experiments,
+      asyncWebAssembly: true,
+      layers: true,
+    };
+    
+    // Add fallbacks for Node.js modules
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      path: false,
+      crypto: false,
+    };
+    
+    // Handle Tesseract.js specific issues
+    config.module.rules.push({
+      test: /\.wasm$/,
+      type: 'webassembly/async',
+    });
+    
+    // Copy WASM files to public directory for static serving (both client and server)
+    config.plugins.push(
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
+            to: 'public/wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
+            to: 'public/wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
+            to: 'public/wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
+            to: 'public/wasm/',
+          },
+          // Copy to root wasm directory for server-side access
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd.wasm',
+            to: 'wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core.wasm',
+            to: 'wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm',
+            to: 'wasm/',
+          },
+          {
+            from: 'node_modules/.pnpm/tesseract.js-core@6.0.0/node_modules/tesseract.js-core/tesseract-core-lstm.wasm',
+            to: 'wasm/',
+          },
+        ],
+      })
+    );
     
     // Ignore problematic files during build
     config.plugins.push(
@@ -70,7 +86,7 @@ const nextConfig = {
         contextRegExp: /.*/,
       })
     );
-    // Ignore specific test files
+    // Ignore specific problematic files
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /05-versions-space\.pdf$/,
@@ -79,7 +95,7 @@ const nextConfig = {
     );
     return config;
   },
-  // Configure headers for WASM files (client-side only)
+  // Configure headers for WASM files
   async headers() {
     return [
       {

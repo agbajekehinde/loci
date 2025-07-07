@@ -96,10 +96,15 @@ class UtilityBillOCR {
             fs.writeFileSync(tempPDFPath, imageInput);
           } catch (writeError) {
             console.error('Failed to write temp PDF file:', writeError);
-            throw new Error('Failed to process PDF file');
+            // Fallback: try to process as image instead
+            isPDF = false;
+            tempPDFPath = '';
+            console.warn('PDF write failed, falling back to image processing');
           }
         } else {
-          throw new Error('PDF processing not available in test environment');
+          // In test environment, treat as image
+          isPDF = false;
+          console.warn('PDF processing disabled in test environment, treating as image');
         }
       }
 
@@ -109,8 +114,22 @@ class UtilityBillOCR {
       if (isPDF && tempPDFPath) {
         try {
           // Dynamic imports to prevent build-time issues
-          const pdfParse = (await import('pdf-parse')).default;
-          const { fromPath: pdf2picFromPath } = await import('pdf2pic');
+          let pdfParse, pdf2picFromPath;
+          
+          try {
+            pdfParse = (await import('pdf-parse')).default;
+          } catch (importError) {
+            console.error('Failed to import pdf-parse:', importError);
+            throw new Error('PDF parsing library not available');
+          }
+          
+          try {
+            const pdf2picModule = await import('pdf2pic');
+            pdf2picFromPath = pdf2picModule.fromPath;
+          } catch (importError) {
+            console.error('Failed to import pdf2pic:', importError);
+            throw new Error('PDF to image conversion library not available');
+          }
           
           // Hybrid approach: Try direct PDF text extraction first
           let directText = '';
@@ -204,7 +223,26 @@ class UtilityBillOCR {
               console.warn('Failed to cleanup temp PDF file:', cleanupError);
             }
           }
-          throw pdfProcessingError;
+          
+          // Fallback: Try to process PDF as image if libraries failed
+          console.warn('PDF processing failed, attempting fallback image processing:', pdfProcessingError);
+          try {
+            if (!this.worker) {
+              throw new Error('OCR worker not initialized');
+            }
+            
+            // Try to process the PDF buffer directly as an image
+            const { data } = await this.worker.recognize(imageInput);
+            extractedText = data.text || '';
+            confidence = data.confidence || 0;
+            
+            if (!extractedText || extractedText.trim().length < 5) {
+              throw new Error('No text could be extracted from PDF using fallback method');
+            }
+          } catch (fallbackError) {
+            console.error('PDF fallback processing also failed:', fallbackError);
+            throw new Error(`PDF processing failed: ${pdfProcessingError instanceof Error ? pdfProcessingError.message : 'Unknown error'}`);
+          }
         }
       } else {
         // Normal image OCR

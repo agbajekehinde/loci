@@ -47,9 +47,10 @@ interface VerificationResult {
         };
         zoning_cadastral: {
             passed: boolean;
-            score: number;
+            score: number | string;
             details: string;
             confidence: number;
+            status?: string;
         };
         gps_reverse_check?: {
             ip?: string;
@@ -369,8 +370,16 @@ const AddressVerificationForm: React.FC = () => {
 
                     {/* Zoning/Cadastral Section */}
                     <div className="p-6 border-b">
-                        <h4 className="text-lg font-semibold mb-2 text-gray-900">Zoning/Cadastral</h4>
-                        <div className="mb-1">Status: <span className={result.checks.zoning_cadastral.passed ? 'text-green-700' : 'text-red-700'}>{result.checks.zoning_cadastral.passed ? 'Passed' : 'Failed'}</span></div>
+                        <h4 className="text-lg font-semibold mb-2 text-gray-900">LandVerify Advanced Checks</h4>
+                        <div className="mb-1">Status: {
+                          result.checks.zoning_cadastral.status === 'submitted' ? (
+                            <span className="text-yellow-700">Submitted</span>
+                          ) : result.checks.zoning_cadastral.passed ? (
+                            <span className="text-green-700">Passed</span>
+                          ) : (
+                            <span className="text-green-700">Submitted</span>
+                          )
+                        }</div>
                         <div className="mb-1">Score: <span className="font-bold text-gray-900">{result.checks.zoning_cadastral.score}%</span></div>
                         <div className="mb-1">Confidence: <span className="font-bold text-gray-900">{result.checks.zoning_cadastral.confidence}%</span></div>
                         <div className="mb-1">Details: <span className="text-gray-800">{result.checks.zoning_cadastral.details}</span></div>
@@ -507,7 +516,7 @@ const AddressVerificationForm: React.FC = () => {
                             required
                         />
                     </div>
-
+{/*
                     <div>
                         <label htmlFor="nin_or_bvn" className="block text-sm font-medium text-gray-800 mb-1">
                             NIN or BVN (Optional)
@@ -521,6 +530,8 @@ const AddressVerificationForm: React.FC = () => {
                             placeholder="For future verification tiers"
                         />
                     </div>
+
+                    */}
                 </div>
 
                 {/* Address Information Section */}

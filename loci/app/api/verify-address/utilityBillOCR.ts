@@ -3,6 +3,7 @@ import { createWorker, Worker } from 'tesseract.js';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import sharp from 'sharp';
 
 // Environment check to prevent test file access in production
 const isProduction = process.env.NODE_ENV === 'production';
@@ -159,7 +160,7 @@ class UtilityBillOCR {
               const numPages = pdfData.numpages || 1;
               const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ocr_pdf_'));
               const pdf2pic = pdf2picFromPath(tempPDFPath, {
-                density: 200,
+                density: 300, // Increased from 200 to 300 DPI for better OCR
                 saveFilename: 'page',
                 savePath: tempDir,
                 format: 'png',
@@ -173,13 +174,24 @@ class UtilityBillOCR {
                 try {
                   const output = await pdf2pic(i);
                   if (!output.path) {
-                    console.warn(`No image path for page ${i}, skipping.`);
+                    console.warn(`No image path for page ${i}, skipping.`); 
                     continue;
                   }
                   const imagePath = output.path;
-                  const imageBuffer = fs.readFileSync(imagePath);
+                  let imageBuffer = fs.readFileSync(imagePath);
+                  // Preprocess image with sharp: grayscale, increase contrast, threshold
+                  // @ts-expect-error: TypeScript type system limitation, Buffer is correct at runtime
+                  imageBuffer = Buffer.from(Uint8Array.prototype.slice.call(imageBuffer)) as Buffer;
+                  // @ts-expect-error: TypeScript type system limitation, Buffer is correct at runtime
+                  imageBuffer = await sharp(imageBuffer)
+                    .grayscale()
+                    .normalize()
+                    .threshold(180)
+                    .toBuffer();
                   if (this.worker) {
                     const { data } = await this.worker.recognize(imageBuffer);
+                    console.log(`Page ${i} OCR extracted text:`, data.text);
+                    console.log(`Page ${i} OCR confidence:`, data.confidence);
                     if (data.text && data.text.trim().length > 0) {
                       allText += data.text + '\n';
                       totalConfidence += data.confidence !== undefined ? data.confidence : 0;

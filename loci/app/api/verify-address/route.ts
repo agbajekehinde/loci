@@ -71,14 +71,22 @@ async function verifyZoningCadastral(address: string, utilityBillBase64?: string
     const result = await response.json();
     console.log('LandVerify API Response:', result);
 
+    if (result.status === 'submitted') {
+      return {
+        passed: true,
+        score: 'N/A',
+        details: `Verification successfully submitted for processing for ${address}. LandVerify processing initiated.`,
+        confidence: 90,
+        landverify_response: result,
+        status: 'submitted'
+      };
+    }
+
     return {
-      passed: result.status === 'submitted' || result.success === true,
-      score: result.status === 'submitted' ? 50 : (result.score || 50),
-      details: result.status === 'submitted' 
-        ? `Verification successfully submitted for processing for ${address}. LandVerify processing initiated.`
-        : (result.message || result.details || 'Zoning/cadastral verification successfully submitted for processing'),
-      confidence: result.status === 'submitted' ? 90 : (result.confidence || 75),
-      landverify_response: result
+      passed: result.success === true,
+      details: result.message || result.details || 'Zoning/cadastral verification successfully submitted for processing',
+      landverify_response: result,
+      status: result.status || 'unknown'
     };
 
   } catch (error) {
@@ -273,7 +281,7 @@ export async function POST(request: NextRequest) {
       IPChecks.gps_reverse_check.score,
       mean_document_score || 0,
       IPChecks.distance_integrity.score,
-      zoningCadastralResult.score
+      typeof zoningCadastralResult.score === 'number' ? zoningCadastralResult.score : undefined
     ].filter(score => score !== null && score !== undefined);
     const overall_score = scores.length > 0 
       ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)

@@ -560,7 +560,7 @@ const AddressVerificationForm: React.FC = () => {
 
                     <div>
                         <label htmlFor="utility-bill" className="block text-sm font-medium text-gray-700 mb-2">
-                            Utility Bill * (Max 5MB)
+                            Utility Bill or relevant land document * (Max 5MB - JPEG, PNG, PDF scans)
                         </label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -588,7 +588,7 @@ const AddressVerificationForm: React.FC = () => {
 
                     <div>
                         <label htmlFor="id-document" className="block text-sm font-medium text-gray-700 mb-2">
-                            ID Document * (Max 5MB)
+                            ID Document * (Max 5MB - JPEG, PNG, PDF scans)
                         </label>
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -615,7 +615,7 @@ const AddressVerificationForm: React.FC = () => {
                         )}
                     </div>
 
-                    <div>
+                    {/* <div>
                         <label htmlFor="land-document" className="block text-sm font-medium text-gray-700 mb-2">
                             Land Document (Optional, Max 5MB)
                         </label>
@@ -637,7 +637,7 @@ const AddressVerificationForm: React.FC = () => {
                                 </span>
                             </label>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Consent Section */}

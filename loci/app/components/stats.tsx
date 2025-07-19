@@ -1,33 +1,33 @@
 import React from 'react';
-import { TrendingUp, Users, Globe, Clock } from 'lucide-react';
+// import { TrendingUp, Users, Globe, Clock } from 'lucide-react';
 
 const StatsSection = () => {
-  const stats = [
-    {
-      icon: TrendingUp,
-      value: '10M+',
-      label: 'Addresses Verified',
-      description: 'Across Lagos and Ogun States'
-    },
-    {
-      icon: Users,
-      value: '500+',
-      label: 'Businesses Trust Us',
-      description: 'Banks, Real Estate, E-commerce'
-    },
-    {
-      icon: Globe,
-      value: '99.9%',
-      label: 'Uptime Guarantee',
-      description: 'Enterprise-grade reliability'
-    },
-    {
-      icon: Clock,
-      value: '<30s',
-      label: 'Average Response',
-      description: 'Lightning-fast verification'
-    }
-  ];
+  // const stats = [
+  //   {
+  //     icon: TrendingUp,
+  //     value: '10M+',
+  //     label: 'Addresses Verified',
+  //     description: 'Across Lagos and Ogun States'
+  //   },
+  //   {
+  //     icon: Users,
+  //     value: '500+',
+  //     label: 'Businesses Trust Us',
+  //     description: 'Banks, Real Estate, E-commerce'
+  //   },
+  //   {
+  //     icon: Globe,
+  //     value: '99.9%',
+  //     label: 'Uptime Guarantee',
+  //     description: 'Enterprise-grade reliability'
+  //   },
+  //   {
+  //     icon: Clock,
+  //     value: '<30s',
+  //     label: 'Average Response',
+  //     description: 'Lightning-fast verification'
+  //   }
+  // ];
 
   return (
     <section className="py-16 bg-gray-50">

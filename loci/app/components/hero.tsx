@@ -6,7 +6,7 @@ import { MapPin, Shield, Zap, ArrowRight, Play } from 'lucide-react';
 
 const HeroSection = () => {
   return (
-    <section className="pt-20 pb-16 bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <section className="pt-32 pb-16 bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
@@ -14,7 +14,7 @@ const HeroSection = () => {
             <div className="space-y-4">
               <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                 <Shield className="w-4 h-4" />
-                <span>Powered by Advanced GIS Technology</span>
+                <span>Powered by Advanced GIS Technology and Machine Learning</span>
               </div>
               
               <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -60,7 +60,7 @@ const HeroSection = () => {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
               <Link 
-                href="/verify" 
+                href="/demo" 
                 className="inline-flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl"
               >
                 <span>Try Free Verification</span>
@@ -73,7 +73,7 @@ const HeroSection = () => {
               </button>
             </div>
 
-            {/* Trust Indicators */}
+            {/* Trust Indicators
             <div className="pt-8 border-t border-gray-200">
               <p className="text-sm text-gray-500 mb-4">Trusted by leading Nigerian businesses</p>
               <div className="flex items-center space-x-8 opacity-60">
@@ -83,6 +83,7 @@ const HeroSection = () => {
                 <div className="text-lg font-bold text-gray-800">RevolutionPlus</div>
               </div>
             </div>
+          </div> */}
           </div>
 
           {/* Right Column - Visual */}

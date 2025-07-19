@@ -8,7 +8,7 @@ const Footer = () => {
     <footer className="bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-center justify-between">
-          <p className="text-gray-700 text-sm">&copy; 2025 Company Name. All rights reserved.</p>
+          <p className="text-gray-700 text-sm">&copy; 2025 LandVerify Technologies. All rights reserved.</p>
           <nav className="mt-4 md:mt-0">
             <ul className="flex flex-wrap space-x-4">
               <li>

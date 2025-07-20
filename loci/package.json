@@ -13,6 +13,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@prisma/client": "^6.12.0",
     "@thednp/dommatrix": "^2.0.12",
     "canvas": "^3.1.2",
     "copy-webpack-plugin": "^13.0.0",
@@ -26,6 +27,7 @@
     "pdf-parse": "^1.1.1",
     "pdf2pic": "^3.2.0",
     "pdfjs-dist": "^5.3.31",
+    "prisma": "^6.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "sharp": "^0.34.2",
@@ -34,13 +36,14 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.0",
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   },
   "pnpm": {

@@ -79,7 +79,7 @@ const FeaturesSection = () => {
         </div>
 
         {/* Feature Highlight */}
-        <div className="mt-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+        <div className="mt-16 bg-gradient-to-r from-teal-800 to-gray-800 rounded-2xl p-8 text-white">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-2xl font-bold mb-4">Ready for Enterprise Scale</h3>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyUtilityBillAddress } from "./utilityBillOCR";
 import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
+import { prisma } from '../../lib/prisma';
 
 async function uploadBase64ToTempStorage(base64Data: string): Promise<string> {
   try {
@@ -313,6 +314,14 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
       landverify_data: zoningCadastralResult.landverify_response
     };
+
+    // Save to database
+    await prisma.verificationResult.create({
+      data: {
+        result: verificationResult,
+        payload: body,
+      }
+    });
 
     return NextResponse.json(verificationResult);
 

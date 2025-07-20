@@ -54,10 +54,10 @@ const HowItWorksSection = () => {
               
               <div className="relative z-10 bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
                 <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                    <step.icon className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mr-4">
+                    <step.icon className="w-6 h-6 text-gray-600" />
                   </div>
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  <div className="w-8 h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-sm font-bold">
                     {index + 1}
                   </div>
                 </div>

@@ -13,7 +13,7 @@ const Header = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-green-900 to-green-900 rounded-lg flex items-center justify-center">
               <MapPin className="w-5 h-5 text-white" />
             </div>
             <div className="flex flex-col">
@@ -43,7 +43,7 @@ const Header = () => {
           <div className="hidden md:flex items-center space-x-4">
             <Link 
               href="/verify" 
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
             >
               Verify Address
             </Link>

@@ -42,7 +42,7 @@ const Header = () => {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Link 
-              href="/verify" 
+              href="/demo" 
               className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
             >
               Verify Address

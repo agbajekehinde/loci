@@ -686,7 +686,7 @@ const AddressVerificationForm: React.FC = () => {
                     <button
                         type="submit"
                         className={`px-8 py-3 rounded-md text-lg font-semibold transition-colors duration-200 ${
-                            isSubmitting ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'
+                            isSubmitting ? 'bg-teal-600 cursor-not-allowed' : 'bg-teal-600 text-white hover:bg-teal-700'
                         }`}
                         disabled={isSubmitting}
                     >

@@ -2,7 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyUtilityBillAddress } from "./utilityBillOCR";
 import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
-import { prisma } from '@/app/lib/prisma'; // Add this import
+import { PrismaClient } from '@prisma/client';
+
+// Create Prisma instance (don't export from route files)
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['query', 'info', 'warn', 'error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 async function uploadBase64ToTempStorage(base64Data: string): Promise<string> {
   try {

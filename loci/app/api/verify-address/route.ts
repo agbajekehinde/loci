@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyUtilityBillAddress } from "./utilityBillOCR";
 import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
-import { prisma } from '../../lib/prisma';
 
 async function uploadBase64ToTempStorage(base64Data: string): Promise<string> {
   try {

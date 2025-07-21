@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyUtilityBillAddress } from "./utilityBillOCR";
 import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
+import { prisma } from '@/app/lib/prisma'; // Add this import
 
 async function uploadBase64ToTempStorage(base64Data: string): Promise<string> {
   try {
@@ -334,4 +335,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}

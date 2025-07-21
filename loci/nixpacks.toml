@@ -1,5 +1,0 @@
-[phases.build]
-cmd = "pnpm run prebuild && pnpm run build"
-
-[phases.start]
-cmd = "pnpm start"

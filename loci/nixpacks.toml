@@ -1,8 +1,0 @@
-[providers]
-node = "18"
-
-[phases.build]
-cmd = "npm run prebuild && npm run build"
-
-[phases.start]
-cmd = "npm start"

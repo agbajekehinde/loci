@@ -5,8 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/copy-wasm.js && npx prisma generate --schema=./prisma/schema.prisma",
-    "build": "NODE_ENV=production next build",
+    "build": "node scripts/copy-wasm.js && npx prisma generate --schema=./prisma/schema.prisma && NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
     "build:analyze": "ANALYZE=true next build",

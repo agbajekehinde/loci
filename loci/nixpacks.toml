@@ -1,0 +1,5 @@
+[phases.build]
+cmd = "node scripts/copy-wasm.js && npx prisma generate --schema=./prisma/schema.prisma && npm run build"
+
+[phases.start]
+cmd = "npm start"

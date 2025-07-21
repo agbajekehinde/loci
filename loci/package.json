@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "build:analyze": "ANALYZE=true next build",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",

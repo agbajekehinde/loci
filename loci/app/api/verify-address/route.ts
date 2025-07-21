@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyUtilityBillAddress } from "./utilityBillOCR";
 import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
-import { PrismaClient } from '../../generated/prisma';
+import { PrismaClient } from '@/app/generated/prisma';
 
 // Create Prisma instance (don't export from route files)
 const globalForPrisma = global as unknown as { prisma: PrismaClient };

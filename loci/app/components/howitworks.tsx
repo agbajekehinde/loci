@@ -30,13 +30,13 @@ const HowItWorksSection = () => {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 bg-gray-50">
+    <section id="how-it-works" className="py-20 dark:bg-[var(--background)] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl font-bold text-[var(--foreground)] mb-4">
             How It Works
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Our streamlined process makes address verification simple and fast. 
             Complete verification in just 4 easy steps.
           </p>
@@ -84,7 +84,7 @@ const HowItWorksSection = () => {
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">5-Minute Process</h4>
+            <h4 className="text-lg font-semibold text-white-900 mb-2">5-Minute Process</h4>
             <p className="text-gray-600">Complete verification in under 5 minutes with our intuitive interface.</p>
           </div>
           
@@ -92,7 +92,7 @@ const HowItWorksSection = () => {
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <FileCheck className="w-8 h-8 text-blue-600" />
             </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">Instant Results</h4>
+            <h4 className="text-lg font-semibold text-white-900 mb-2">Instant Results</h4>
             <p className="text-gray-600">Get verification results in real-time with detailed analysis reports.</p>
           </div>
           
@@ -100,7 +100,7 @@ const HowItWorksSection = () => {
             <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MapPin className="w-8 h-8 text-purple-600" />
             </div>
-            <h4 className="text-lg font-semibold text-gray-900 mb-2">Precise Location</h4>
+            <h4 className="text-lg font-semibold text-white-900 mb-2">Precise Location</h4>
             <p className="text-gray-600">GPS-accurate verification with cadastral and zoning information.</p>
           </div>
         </div>

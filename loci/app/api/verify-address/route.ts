@@ -3,6 +3,26 @@ import { verifyUtilityBillAddress } from "./utilityBillOCR";
 import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
 import { PrismaClient } from '@prisma/client';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+async function uploadBase64ToCloudinary(base64Data: string, folder = 'landverify_uploads'): Promise<string> {
+  try {
+    const uploadResponse = await cloudinary.uploader.upload(
+      `data:image/jpeg;base64,${base64Data}`,
+      { folder }
+    );
+    return uploadResponse.secure_url;
+  } catch (error) {
+    console.error('Cloudinary upload failed:', error);
+    throw new Error('Failed to upload image to Cloudinary');
+  }
+}
 
 // Create Prisma instance (don't export from route files)
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
@@ -14,19 +34,7 @@ const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-async function uploadBase64ToTempStorage(base64Data: string): Promise<string> {
-  try {
-    const dataUrl = `data:image/jpeg;base64,${base64Data}`;
-    
-    return dataUrl;
-    
-  } catch (error) {
-    console.error('Failed to process base64 image:', error);
-    throw new Error('Failed to process utility bill image');
-  }
-}
-
-async function verifyZoningCadastral(address: string, utilityBillBase64?: string) {
+async function verifyZoningCadastral(address: string, fileUrls: string[]) {
   try {
     if (!address || address.trim() === '') {
       throw new Error('Address is required for zoning/cadastral verification');
@@ -36,25 +44,9 @@ async function verifyZoningCadastral(address: string, utilityBillBase64?: string
       throw new Error('LANDVERIFY_KEY environment variable is not set');
     }
 
-    const files = [];
-    
-    if (utilityBillBase64 && utilityBillBase64.trim() !== '') {
-      try {
-        const fileUrl = await uploadBase64ToTempStorage(utilityBillBase64);
-        files.push(fileUrl);
-        console.log('Added utility bill to files array');
-      } catch (uploadError) {
-        console.error('Failed to process utility bill:', uploadError);
-      }
-    }
-
-    if (files.length === 0) {
-      throw new Error('No files available for verification - utility bill is required');
-    }
-
     const payload = {
       address: address.trim(),
-      files: files,
+      files: fileUrls,
       userId: 3386
     };
 
@@ -215,9 +207,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    let fileUrls: string[] = [];
+    try {
+      const utilityBillUrl = await uploadBase64ToCloudinary(cleanUtilityBillBase64);
+      const idDocumentUrl = await uploadBase64ToCloudinary(cleanIdDocumentBase64);
+      fileUrls = [utilityBillUrl, idDocumentUrl];
+    } catch (uploadError) {
+      console.error('Failed to upload images to Cloudinary:', uploadError);
+      return NextResponse.json(
+        { error: 'Failed to upload images to Cloudinary', details: uploadError instanceof Error ? uploadError.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
+
     let zoningCadastralResult;
     try {
-      zoningCadastralResult = await verifyZoningCadastral(typed_address, cleanUtilityBillBase64);
+      zoningCadastralResult = await verifyZoningCadastral(typed_address, fileUrls);
     } catch (zoningError) {
       console.error('Zoning/cadastral verification failed:', zoningError);
       zoningCadastralResult = {
@@ -326,10 +331,15 @@ export async function POST(request: NextRequest) {
     };
 
     // Save to database
+    const sanitizedPayload = {
+      ...body,
+      utility_bill: fileUrls[0],
+      id_document: fileUrls[1],
+    };
     await prisma.verificationResult.create({
       data: {
         result: verificationResult,
-        payload: body,
+        payload: sanitizedPayload,
       }
     });
 

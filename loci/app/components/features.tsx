@@ -54,13 +54,13 @@ const FeaturesSection = () => {
   };
 
   return (
-    <section id="features" className="py-20 bg-white">
+    <section id="features" className="py-20 dark:bg-[var(--background)] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl font-bold text-[var(--foreground)] mb-4">
             Everything You Need for Address Verification
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Our comprehensive platform combines cutting-edge technology with local expertise 
             to deliver the most accurate address verification in Nigeria.
           </p>
@@ -68,18 +68,18 @@ const FeaturesSection = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="group p-6 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300">
+            <div key={index} className="group p-6 rounded-xl border border-[var(--card-border)] dark:border-[var(--card-border)] bg-[var(--card)] dark:bg-[var(--card)] shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-md">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${getColorClasses(feature.color)}`}>
                 <feature.icon className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
             </div>
           ))}
         </div>
 
         {/* Feature Highlight */}
-        <div className="mt-16 bg-gradient-to-r from-teal-800 to-gray-800 rounded-2xl p-8 text-white">
+        <div className="mt-16 bg-gradient-to-r from-teal-800/90 to-gray-800/90 dark:from-teal-900/90 dark:to-gray-900/90 rounded-2xl p-8 text-white shadow-xl backdrop-blur-md">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-2xl font-bold mb-4">Ready for Enterprise Scale</h3>

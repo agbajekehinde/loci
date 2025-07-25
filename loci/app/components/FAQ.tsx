@@ -12,19 +12,6 @@ interface OpenItems {
     [key: number]: boolean;
 }
 
-interface Category {
-    id: string;
-    name: string;
-    icon: React.ComponentType<{ className?: string }>;
-}
-
-interface FAQItem {
-    id: number;
-    category: string;
-    question: string;
-    answer: string;
-}
-
 const toggleItem = (id: number) => {
     setOpenItems((prev: OpenItems) => ({
         ...prev,
@@ -138,7 +125,7 @@ const toggleItem = (id: number) => {
           </h1>
           
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Find answers to common questions about Loci's address verification service, 
+            Find answers to common questions about Loci address verification service, 
             API integration, and features.
           </p>
 
@@ -238,7 +225,7 @@ const toggleItem = (id: number) => {
           <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
             <h2 className="text-3xl font-bold text-white mb-4">Still have questions?</h2>
             <p className="text-xl text-gray-300 mb-8">
-              Our support team is here to help you get the most out of Loci's verification services.
+              Our support team is here to help you get the most out of Loci verification services.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="inline-flex items-center justify-center space-x-2 bg-teal-600 text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-teal-700 transition-colors shadow-lg">

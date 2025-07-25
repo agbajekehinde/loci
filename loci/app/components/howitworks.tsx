@@ -76,35 +76,8 @@ const HowItWorksSection = () => {
               </div>
             </div>
           ))}
+        </div>   
         </div>
-
-        {/* Process Benefits */}
-        <div className="mt-16 grid md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <h4 className="text-lg font-semibold text-white-900 mb-2">5-Minute Process</h4>
-            <p className="text-gray-600">Complete verification in under 5 minutes with our intuitive interface.</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileCheck className="w-8 h-8 text-blue-600" />
-            </div>
-            <h4 className="text-lg font-semibold text-white-900 mb-2">Instant Results</h4>
-            <p className="text-gray-600">Get verification results in real-time with detailed analysis reports.</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <MapPin className="w-8 h-8 text-purple-600" />
-            </div>
-            <h4 className="text-lg font-semibold text-white-900 mb-2">Precise Location</h4>
-            <p className="text-gray-600">GPS-accurate verification with cadastral and zoning information.</p>
-          </div>
-        </div>
-      </div>
     </section>
   );
 };

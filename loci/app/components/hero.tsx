@@ -20,7 +20,7 @@ const HeroSection = () => {
               </div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight drop-shadow-xl whitespace-nowrap">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-green-300 drop-shadow-xl">Verify Customer Addresses <br/> with Confidence</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-green-300 drop-shadow-xl">Verify Customer Property <br/> with Confidence</span>
               </h1>
               
               <p className="text-lg md:text-xl text-gray-100 leading-relaxed font-medium drop-shadow-lg">

@@ -111,20 +111,20 @@ const toggleItem = (id: number) => {
   });
 
   return (
-    <div className="min-h-screen bg-[var(--background)] transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-[var(--background)] transition-colors duration-300">
       {/* Header Section */}
-      <section className="relative py-20 bg-[var(--background)] text-white overflow-hidden transition-colors duration-300">
+      <section className="relative py-20 bg-white dark:bg-[var(--background)] text-gray-900 dark:text-white overflow-hidden transition-colors duration-300">
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center space-x-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm mb-6 backdrop-blur-sm">
+          <div className="inline-flex items-center space-x-2 bg-gray-100 dark:bg-white/20 text-gray-900 dark:text-white px-4 py-2 rounded-full text-sm mb-6 backdrop-blur-sm">
             <HelpCircle className="w-4 h-4" />
             <span>Frequently Asked Questions</span>
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-green-300">How can we help you?</span>
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight dark:bg-[var(--background)]">
+            <span className="text">How can we help you?</span>
           </h1>
           
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about Loci address verification service, 
             API integration, and features.
           </p>
@@ -137,20 +137,20 @@ const toggleItem = (id: number) => {
               placeholder="Search FAQ..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-800/50 text-white placeholder-gray-400 border border-gray-700 backdrop-blur-sm focus:ring-4 focus:ring-teal-500/30 focus:border-teal-500 transition-all duration-300 text-lg"
+              className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-[var(--background)] text-gray-900 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-gray-700 backdrop-blur-sm focus:ring-4 focus:ring-teal-500/30 focus:border-teal-500 transition-all duration-300 text-lg"
             />
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="py-16 bg-[var(--background)] transition-colors duration-300">
+      <section className="py-16 bg-white dark:bg-[var(--background)] transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Category Sidebar */}
             <div className="lg:col-span-1">
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl shadow-lg p-6 sticky top-8 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-4">Categories</h3>
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 sticky top-8 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Categories</h3>
                 <div className="space-y-2">
                   {categories.map((category) => {
                     const Icon = category.icon;
@@ -161,8 +161,8 @@ const toggleItem = (id: number) => {
                         onClick={() => setActiveCategory(category.id)}
                         className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-all duration-200 ${
                           isActive 
-                            ? 'bg-teal-600 text-white shadow-lg' 
-                            : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'
+                            ? 'bg-teal-600 text-white' 
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
                         }`}
                       >
                         <Icon className="w-5 h-5" />
@@ -179,21 +179,21 @@ const toggleItem = (id: number) => {
               <div className="space-y-4">
                 {filteredFAQs.length === 0 ? (
                   <div className="text-center py-12">
-                    <HelpCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-400 mb-2">No results found</h3>
+                    <HelpCircle className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No results found</h3>
                     <p className="text-gray-500">Try adjusting your search or browse different categories.</p>
                   </div>
                 ) : (
                   filteredFAQs.map((item) => (
                     <div
                       key={item.id}
-                      className="bg-gray-800/30 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-700/50 hover:border-gray-600"
+                      className="bg-gray-50 dark:bg-gray-600/30 rounded-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600"
                     >
                       <button
                         onClick={() => toggleItem(item.id)}
-                        className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-gray-700/30 transition-colors duration-200"
+                        className="w-full px-6 py-6 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors duration-200"
                       >
-                        <h3 className="text-lg font-semibold text-white pr-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white pr-4">
                           {item.question}
                         </h3>
                         {openItems[item.id] ? (
@@ -204,8 +204,8 @@ const toggleItem = (id: number) => {
                       </button>
                       
                       {openItems[item.id] && (
-                        <div className="px-6 pb-6 border-t border-gray-700/50">
-                          <div className="pt-4 text-gray-300 leading-relaxed">
+                        <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700/50">
+                          <div className="pt-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                             {item.answer}
                           </div>
                         </div>
@@ -220,11 +220,11 @@ const toggleItem = (id: number) => {
       </section>
 
       {/* Contact Section */}
-      <section className="py-16 bg-[var(--background)] transition-colors duration-300">
+      <section className="py-16 bg-white dark:bg-[var(--background)] transition-colors duration-300">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
-            <h2 className="text-3xl font-bold text-white mb-4">Still have questions?</h2>
-            <p className="text-xl text-gray-300 mb-8">
+          <div className="bg-white-800/30 rounded-2xl p-8 border border-gray-700/50">
+            <h2 className="text-3xl font-bold text-white-600 mb-4">Still have questions?</h2>
+            <p className="text-xl text-gray-500 mb-8">
               Our support team is here to help you get the most out of Loci verification services.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -232,7 +232,7 @@ const toggleItem = (id: number) => {
                 <span>Contact Support</span>
                 <ArrowRight className="w-5 h-5" />
               </button>
-              <button className="inline-flex items-center justify-center space-x-2 border-2 border-gray-600 text-gray-300 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-700/30 hover:text-white hover:border-gray-500 transition-colors">
+              <button className="inline-flex items-center justify-center space-x-2 border-2 border-gray-600 text-gray-500 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-700/30 hover:text-gray-600 hover:border-gray-500 transition-colors">
                 <span>Schedule Demo</span>
               </button>
             </div>

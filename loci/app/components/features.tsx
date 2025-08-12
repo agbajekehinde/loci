@@ -68,7 +68,7 @@ const FeaturesSection = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <div key={index} className="group p-6 rounded-xl border border-[var(--card-border)] dark:border-[var(--card-border)] bg-[var(--card)] dark:bg-[var(--card)] shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-md">
+            <div key={index} className="group p-6 rounded-xl border border-[var(--card-border)] dark:border-[var(--card-border)] bg-[var(--card)] dark:bg-[var(--card)] hover:shadow-xl transition-all duration-300 backdrop-blur-md">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${getColorClasses(feature.color)}`}>
                 <feature.icon className="w-6 h-6" />
               </div>

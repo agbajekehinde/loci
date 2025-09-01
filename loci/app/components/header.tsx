@@ -26,7 +26,7 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="#features" className="text-gray-700 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition-colors">Features</Link>
             <Link href="#how-it-works" className="text-gray-700 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition-colors">How it Works</Link>
-            <Link href="/docs" className="text-gray-700 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition-colors flex items-center space-x-1">
+            <Link href="https://www.landveriy.ng/API" className="text-gray-700 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition-colors flex items-center space-x-1">
               <Code className="w-4 h-4" />
               <span>API Docs</span>
             </Link>

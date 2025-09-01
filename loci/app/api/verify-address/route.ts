@@ -4,6 +4,7 @@ import { runVerificationChecks } from '../document-validity/documentValidity';
 import { getIpAndLocation } from '@/app/hooks/geolocation';
 import { PrismaClient } from '@prisma/client';
 import { v2 as cloudinary } from 'cloudinary';
+import exifr from 'exifr';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -21,6 +22,37 @@ async function uploadBase64ToCloudinary(base64Data: string, folder = 'landverify
   } catch (error) {
     console.error('Cloudinary upload failed:', error);
     throw new Error('Failed to upload image to Cloudinary');
+  }
+}
+
+async function extractExifData(base64Data: string) {
+  try {
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    const exifData = await exifr.parse(buffer);
+    
+    return {
+      success: true,
+      exif: exifData,
+      gps: exifData?.latitude && exifData?.longitude ? {
+        latitude: exifData.latitude,
+        longitude: exifData.longitude,
+        altitude: exifData.altitude
+      } : null,
+      timestamp: exifData?.DateTimeOriginal || exifData?.DateTime,
+      device: {
+        make: exifData?.Make,
+        model: exifData?.Model,
+        software: exifData?.Software
+      }
+    };
+  } catch (error) {
+    console.error('EXIF extraction failed:', error);
+    return {
+      success: false,
+      exif: null,
+      error: error instanceof Error ? error.message : 'Unknown EXIF error'
+    };
   }
 }
 
@@ -166,6 +198,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Extract EXIF data from both documents
+        const utilityBillExif = await extractExifData(cleanUtilityBillBase64);
+        const idDocumentExif = await extractExifData(cleanIdDocumentBase64);
+
+        console.log('Utility Bill EXIF:', utilityBillExif);
+        console.log('ID Document EXIF:', idDocumentExif);
 
     let ocrResult_utility, documentValidityResult_utility;
     try {
@@ -319,6 +358,10 @@ export async function POST(request: NextRequest) {
         zoning_cadastral: zoningCadastralResult,
         gps_reverse_check: IPChecks.gps_reverse_check,
         distance_integrity: IPChecks.distance_integrity
+      },
+      metadata: {
+        utility_bill_exif: utilityBillExif,
+        id_document_exif: idDocumentExif
       },
       ip: user_ip,
       ip_location: ipAndLocation.location,

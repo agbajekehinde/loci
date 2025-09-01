@@ -24,6 +24,7 @@
     "copy-webpack-plugin": "^13.0.0",
     "dommatrix": "^1.0.3",
     "exif-parser": "^0.1.12",
+    "exifr": "^7.1.3",
     "file-type": "^21.0.0",
     "formidable": "^3.5.4",
     "lucide-react": "^0.515.0",

@@ -4,6 +4,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import sharp from 'sharp';
+import exifr from 'exifr';
 
 // Environment check to prevent test file access in production
 const isProduction = process.env.NODE_ENV === 'production';
@@ -40,6 +41,39 @@ interface BlockMatchResult {
   }>;
   blockScore: number;
   totalMatches: number;
+}
+
+async function extractExifData(base64Data: string) {
+  try {
+    // Convert base64 to buffer
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    // Extract EXIF data
+    const exifData = await exifr.parse(buffer);
+    
+    return {
+      success: true,
+      exif: exifData,
+      gps: exifData?.latitude && exifData?.longitude ? {
+        latitude: exifData.latitude,
+        longitude: exifData.longitude,
+        altitude: exifData.altitude
+      } : null,
+      timestamp: exifData?.DateTimeOriginal || exifData?.DateTime,
+      device: {
+        make: exifData?.Make,
+        model: exifData?.Model,
+        software: exifData?.Software
+      }
+    };
+  } catch (error) {
+    console.error('EXIF extraction failed:', error);
+    return {
+      success: false,
+      exif: null,
+      error: error instanceof Error ? error.message : 'Unknown EXIF error'
+    };
+  }
 }
 
 class UtilityBillOCR {
@@ -571,33 +605,33 @@ class UtilityBillOCR {
     const norm1 = this.normalizeForMatching(block1);
     const norm2 = this.normalizeForMatching(block2);
     
-    // Exact match
-    if (norm1 === norm2) return 1.0;
+    // Calculate all similarities
+    const exactMatch = norm1 === norm2 ? 1.0 : 0;
+    const substringMatch = this.calculateSubstringMatch(norm1, norm2);
+    const levenshteinSim = this.calculateLevenshteinSimilarity(norm1, norm2);
+    const jaroSim = this.calculateJaroWinklerSimilarity(norm1, norm2);
+    const phoneticSim = this.calculatePhoneticSimilarity(norm1, norm2);
     
-    // Substring match (either direction)
-    if (norm1.length >= 3 && norm2.length >= 3) {
-      if (norm1.includes(norm2) || norm2.includes(norm1)) {
-        const shorterLength = Math.min(norm1.length, norm2.length);
-        const longerLength = Math.max(norm1.length, norm2.length);
+    // Weighted ensemble
+    const weights = { exact: 0.4, substring: 0.25, levenshtein: 0.15, jaro: 0.15, phonetic: 0.05 };
+    
+    return (exactMatch * weights.exact) +
+           (substringMatch * weights.substring) +
+           (levenshteinSim * weights.levenshtein) +
+           (jaroSim * weights.jaro) +
+           (phoneticSim * weights.phonetic);
+  }
+  
+  // ADD THIS NEW METHOD
+  private calculateSubstringMatch(str1: string, str2: string): number {
+    if (str1.length >= 3 && str2.length >= 3) {
+      if (str1.includes(str2) || str2.includes(str1)) {
+        const shorterLength = Math.min(str1.length, str2.length);
+        const longerLength = Math.max(str1.length, str2.length);
         return shorterLength / longerLength;
       }
     }
-    
-    // Levenshtein similarity
-    let levenshteinSim = 0;
-    if (norm1.length >= 3 && norm2.length >= 3) {
-      levenshteinSim = this.calculateLevenshteinSimilarity(norm1, norm2);
-      if (levenshteinSim >= 0.7) return levenshteinSim;
-    }
-    
-    // Phonetic similarity for common misspellings
-    const phoneticSim = this.calculatePhoneticSimilarity(norm1, norm2);
-    if (phoneticSim >= 0.8) return phoneticSim;
-    
-    // Jaro-Winkler similarity for better fuzzy matching
-    const jaroSim = this.calculateJaroWinklerSimilarity(norm1, norm2);
-    
-    return Math.max(levenshteinSim || 0, phoneticSim, jaroSim);
+    return 0;
   }
 
   // Normalize text for consistent matching

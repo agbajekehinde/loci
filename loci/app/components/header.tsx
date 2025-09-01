@@ -30,16 +30,15 @@ const Header = () => {
               <Code className="w-4 h-4" />
               <span>API Docs</span>
             </Link>
-            <Link href="/pricing" className="text-gray-700 dark:text-gray-200 hover:text-teal-600 dark:hover:text-teal-400 font-medium transition-colors">Pricing</Link>
           </nav>
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Link 
               href="/demo" 
-              className="bg-teal-600 hover:bg-green-600 dark:bg-teal-500 dark:hover:bg-green-500 text-white px-5 py-2 rounded-xl font-semibold shadow transition-colors"
+              className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-700 text-white px-5 py-2 rounded-lg font-semibold shadow transition-colors"
             >
-              Verify Address
+              Book a Demo
             </Link>
             <Link 
               href="/dashboard" 

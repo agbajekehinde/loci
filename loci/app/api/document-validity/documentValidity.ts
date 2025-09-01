@@ -1,6 +1,7 @@
 // lib/runVerificationChecks.ts
 import sharp from 'sharp';
 import { createWorker } from 'tesseract.js';
+import exifr from 'exifr';
 
 export async function runVerificationChecks(base64Data: string) {
   try {
@@ -47,6 +48,26 @@ async function verifyImage(buffer: Buffer) {
     const image = sharp(buffer);
     const metadata = await image.metadata();
 
+    let exifData = null;
+    let hasDeviceInfo = false;
+    let hasTimestamp = false;
+    let hasGPSData = false;
+    let likelyScreenshot = false;
+    
+    try {
+      const exifData = await exifr.parse(buffer);
+      
+      hasDeviceInfo = !!(exifData?.Make || exifData?.Model);
+      hasTimestamp = !!(exifData?.DateTime || exifData?.DateTimeOriginal);
+      hasGPSData = !!(exifData?.GPSLatitude && exifData?.GPSLongitude);
+      
+      const isPNG = metadata.format === 'png';
+      likelyScreenshot = isPNG && !hasDeviceInfo && !hasTimestamp;
+    } catch (exifError) {
+      console.warn('EXIF extraction failed:', exifError);
+    }
+
+
     let text = '';
     let ocrConfidence = null;
     try {
@@ -75,6 +96,19 @@ async function verifyImage(buffer: Buffer) {
         (metadata.width < 100 || metadata.height < 100)) {
       issues.push('Image dimensions are suspiciously small');
     }
+
+    if (likelyScreenshot) {
+      issues.push('Document appears to be a screenshot rather than an original photo');
+    }
+    
+    if (!hasDeviceInfo && metadata.format === 'jpeg') {
+      issues.push('JPEG image lacks camera/device information (possible manipulation)');
+    }
+    
+    if (!hasTimestamp) {
+      issues.push('Document lacks timestamp information');
+    }
+
 
     // --- New: OCR confidence check ---
     if (ocrConfidence !== null && ocrConfidence < 60) {
@@ -237,7 +271,14 @@ async function verifyImage(buffer: Buffer) {
     }
 
     // Score: subtract 20 for each issue
-    const authenticityScore = Math.max(0, 100 - (issues.length * 20));
+   let baseScore = 100 - (issues.length * 15);
+
+    if (hasDeviceInfo) baseScore += 5;
+    if (hasTimestamp) baseScore += 5;
+    if (hasGPSData) baseScore += 10;
+    if (!likelyScreenshot) baseScore += 10;
+
+const authenticityScore = Math.max(0, Math.min(100, baseScore));
 
     return {
       authenticityScore,
@@ -247,6 +288,13 @@ async function verifyImage(buffer: Buffer) {
       blurVariance,
       suspiciousEdgeScore,
       blockSharpnessStats,
+      exifData,
+      hasDeviceInfo,
+      hasTimestamp,
+      hasGPSData,
+      likelyScreenshot,
+      imageFormat: metadata.format
+
     };
   } catch (error) {
     console.error('Error verifying image:', error);

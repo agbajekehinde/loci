@@ -58,11 +58,11 @@ const FeaturesSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-[var(--foreground)] mb-4">
-            Everything You Need for Address Verification
+            Everything You Need for Property Verification
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Our comprehensive platform combines cutting-edge technology with local expertise 
-            to deliver the most accurate address verification in Nigeria.
+            to deliver the most accurate land and property data verification in Nigeria.
           </p>
         </div>
 

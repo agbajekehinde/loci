@@ -124,7 +124,7 @@ const toggleItem = (id: number) => {
             <span className="text">How can we help you?</span>
           </h1>
           
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
             Find answers to common questions about Loci address verification service, 
             API integration, and features.
           </p>

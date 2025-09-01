@@ -11,8 +11,8 @@ const HowItWorksSection = () => {
     },
     {
       icon: MapPin,
-      title: 'Pin Location',
-      description: 'Drop a pin on our interactive map to confirm the exact GPS coordinates.',
+      title: 'Provide Address',
+      description: 'Provide full user address or any other address identifiers such as the Latitude and Longitude',
       details: ['Interactive map interface', 'GPS coordinate capture', 'Location accuracy check']
     },
     {

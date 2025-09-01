@@ -70,7 +70,7 @@ const Header = () => {
                 <Link href="/verify" className="bg-teal-600 hover:bg-green-600 dark:bg-teal-500 dark:hover:bg-green-500 text-white px-4 py-2 rounded-lg text-center font-semibold shadow transition-colors">
                   Verify Address
                 </Link>
-                <Link href="/dashboard" className="border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-center font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow">
+                <Link href="https://app.landverify.ng/API" className="border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-center font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shadow">
                   API Access
                 </Link>
               </div>

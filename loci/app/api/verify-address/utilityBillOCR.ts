@@ -4,7 +4,6 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import sharp from 'sharp';
-import exifr from 'exifr';
 
 // Environment check to prevent test file access in production
 const isProduction = process.env.NODE_ENV === 'production';
@@ -41,39 +40,6 @@ interface BlockMatchResult {
   }>;
   blockScore: number;
   totalMatches: number;
-}
-
-async function extractExifData(base64Data: string) {
-  try {
-    // Convert base64 to buffer
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    // Extract EXIF data
-    const exifData = await exifr.parse(buffer);
-    
-    return {
-      success: true,
-      exif: exifData,
-      gps: exifData?.latitude && exifData?.longitude ? {
-        latitude: exifData.latitude,
-        longitude: exifData.longitude,
-        altitude: exifData.altitude
-      } : null,
-      timestamp: exifData?.DateTimeOriginal || exifData?.DateTime,
-      device: {
-        make: exifData?.Make,
-        model: exifData?.Model,
-        software: exifData?.Software
-      }
-    };
-  } catch (error) {
-    console.error('EXIF extraction failed:', error);
-    return {
-      success: false,
-      exif: null,
-      error: error instanceof Error ? error.message : 'Unknown EXIF error'
-    };
-  }
 }
 
 class UtilityBillOCR {

@@ -48,7 +48,6 @@ async function verifyImage(buffer: Buffer) {
     const image = sharp(buffer);
     const metadata = await image.metadata();
 
-    let exifData = null;
     let hasDeviceInfo = false;
     let hasTimestamp = false;
     let hasGPSData = false;
@@ -288,7 +287,6 @@ const authenticityScore = Math.max(0, Math.min(100, baseScore));
       blurVariance,
       suspiciousEdgeScore,
       blockSharpnessStats,
-      exifData,
       hasDeviceInfo,
       hasTimestamp,
       hasGPSData,
